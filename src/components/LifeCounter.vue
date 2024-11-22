@@ -3,56 +3,51 @@
     ref="containerRef"
     class="container"
   >
-    <input
-      type="color"
-      v-model="backgroundColor"
-    >
+    <ColorPicker v-model="backgroundColor" />
     <div class="counter">
-      <i class="fa-solid fa-heart"></i>
-      <button
+      <i class="pi pi-heart"></i>
+      <Button
         class="button decrease"
         @click="decreaseLife"
-      >
-        <i class="fa-solid fa-square-minus"></i>
-      </button>
+        icon="pi pi-minus"
+      />
       <span class="life-total">{{ lifeTotal }}</span>
-      <button
+      <Button
         class="button increase"
         @click="increaseLife"
-      >
-        <i class="fa-solid fa-square-plus"></i>
-      </button>
+        icon="pi pi-plus"
+      />
     </div>
     <div class="commander-damage">
-      <i class="fa-solid fa-user"></i>
-      <button
+      <i class="pi pi-user"></i>
+      <Button
         class="button decrease"
         @click="decreaseCommanderDamage"
-      >
-        <i class="fa-solid fa-square-minus"></i>
-      </button>
+        icon="pi pi-minus"
+      />
       <span class="commander-damage-total">{{ commanderDamage }}</span>
-      <button
+      <Button
         class="button increase"
         @click="increaseCommanderDamage"
-      >
-        <i class="fa-solid fa-square-plus"></i>
-      </button>
+        icon="pi pi-plus"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import Button from 'primevue/button'
+import ColorPicker from 'primevue/colorpicker'
 
 const lifeTotal = ref(40)
 const commanderDamage = ref(0)
-const backgroundColor = ref('#111111')
+const backgroundColor = ref('#1111111')
 const containerRef = ref(null)
 
 watch(backgroundColor, (newColor) => {
   if (containerRef.value) {
-    containerRef.value.style.backgroundColor = newColor
+    containerRef.value.style.backgroundColor = '#' + newColor
   }
 })
 
@@ -81,10 +76,11 @@ function decreaseCommanderDamage() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  width: 40vw;
-  margin: 1rem;
-  padding: .4rem;
+  background-color: #1d1d1d;
+  width: 20%;
+  height: 20%;
+  margin: 0;
+  padding: 0;
 }
 
 .counter,
