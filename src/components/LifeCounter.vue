@@ -2,6 +2,7 @@
   <div
     ref="containerRef"
     class="container"
+    :style="{ 'width': counters > 2 ? '50%' : '100%' }"
   >
     <ColorPicker v-model="backgroundColor" />
     <div class="counter">
@@ -36,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, defineProps } from 'vue'
 import Button from 'primevue/button'
 import ColorPicker from 'primevue/colorpicker'
 
@@ -44,6 +45,10 @@ const lifeTotal = ref(40)
 const commanderDamage = ref(0)
 const backgroundColor = ref('#1111111')
 const containerRef = ref(null)
+
+defineProps({
+  counters: Number
+})
 
 watch(backgroundColor, (newColor) => {
   if (containerRef.value) {
@@ -77,10 +82,10 @@ function decreaseCommanderDamage() {
   align-items: center;
   justify-content: center;
   background-color: #1d1d1d;
-  width: 20%;
-  height: 20%;
+  width: 100%;
   margin: 0;
   padding: 0;
+  flex: 1;
 }
 
 .counter,
@@ -98,30 +103,15 @@ function decreaseCommanderDamage() {
   display: flex;
   justify-content: center;
   align-items: center;
+  color: #ffffff;
+  background-color: transparent;
 }
 
 .button:hover {
   transform: scale(1.1);
-}
-
-.button.decrease {
-  color: #dc3545;
-  background-color: transparent;
-}
-
-.button.decrease:hover {
-  color: #c82333;
-  background-color: transparent;
-}
-
-.button.increase {
-  color: #28a745;
-  background-color: transparent;
-}
-
-.button.increase:hover {
-  color: #218838;
-  background-color: transparent;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border: none !important;
 }
 
 .life-total,
@@ -129,7 +119,7 @@ function decreaseCommanderDamage() {
   font-size: 32px;
   font-weight: bold;
   margin: 0 15px;
-  color: #ffc400;
+  color: #ffffff;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 </style>
