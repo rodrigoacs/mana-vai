@@ -11,13 +11,18 @@
       />
     </template>
   </SpeedDial>
+
   <div
     class="top-container"
-    :style="{ 'flex-direction': counters > 2 ? 'row' : 'column' }"
+    :style="{
+      'flex-direction': counters > 2 ? 'row' : 'column',
+      'justify-content': counters > 2 ? 'space-around' : 'center'
+    }"
   >
     <LifeCounter
-      v-for="counter in counters"
-      :counters
+      v-for="n in counters"
+      :key="n"
+      :counters="counters"
     />
   </div>
 </template>
@@ -28,6 +33,8 @@ import LifeCounter from './components/LifeCounter.vue'
 import SpeedDial from 'primevue/speeddial'
 import Button from 'primevue/button'
 
+const counters = ref(2)
+
 const items = ref([
   { icon: 'fa-solid fa-1', command: () => (counters.value = 1) },
   { icon: 'fa-solid fa-2', command: () => (counters.value = 2) },
@@ -36,15 +43,12 @@ const items = ref([
   { icon: 'fa-solid fa-5', command: () => (counters.value = 5) },
   { icon: 'fa-solid fa-6', command: () => (counters.value = 6) },
 ])
-
-const counters = ref(0)
 </script>
 
 <style scoped>
 .top-container {
   display: flex;
   flex-wrap: wrap;
-  flex-direction: column;
   width: 100%;
   height: 100%;
 }
