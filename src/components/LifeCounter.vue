@@ -279,28 +279,24 @@ const markers = ref({
   poison: 0,
   energy: 0,
   experience: 0,
-  commander: 0,
 })
 
 const markerDeltas = ref({
   poison: 0,
   energy: 0,
   experience: 0,
-  commander: 0,
 })
 
 const markerLabels = {
   poison: '☠️',
   energy: '⚡',
   experience: '⭐',
-  commander: '👑',
 }
 
 const markerDialogs = ref({
   poison: false,
   energy: false,
   experience: false,
-  commander: false,
 })
 
 const markerTimers = {}
@@ -364,12 +360,14 @@ const isReversed = ref(false)
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #1d1d1d; /* Cor de fallback */
+  background-color: #1d1d1d;
+  /* Cor de fallback */
   width: 100%;
   margin: 0;
   padding: 0;
   flex: 1;
-  position: relative; /* Necessário para posicionamento absoluto do controls-container */
+  position: relative;
+  /* Necessário para posicionamento absoluto do controls-container */
 }
 
 .controls-container {
@@ -378,7 +376,7 @@ const isReversed = ref(false)
   right: 10px;
   display: flex;
   gap: 10px;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.5);
   padding: 5px;
   border-radius: 5px;
   z-index: 50;
@@ -392,7 +390,7 @@ const isReversed = ref(false)
   align-items: center;
   justify-content: center;
   color: white;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.5) !important;
   border: 2px solid white;
   transition: all 0.3s ease;
   font-size: 20px;
@@ -400,19 +398,20 @@ const isReversed = ref(false)
 
 .reverse-orientation:hover {
   transform: scale(1.1);
-  background-color: rgba(255, 255, 255, 0.3) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
 }
 
 .color-input {
   width: 40px;
   height: 40px;
-  border: 2px solid white;
+  border: none;
   border-radius: 50%;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
   padding: 0;
-  background: none;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .color-input::-webkit-color-swatch-wrapper {
@@ -434,6 +433,9 @@ const isReversed = ref(false)
   align-items: center;
   justify-content: center;
   margin: 10px 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 15px;
+  border-radius: 30px;
 }
 
 .button {
@@ -444,12 +446,16 @@ const isReversed = ref(false)
   justify-content: center;
   align-items: center;
   color: #ffffff;
-  background-color: transparent;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin: 0 5px;
 }
 
 .button:hover {
   transform: scale(1.1);
-  background-color: transparent !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
   color: #ffffff !important;
   border: none !important;
 }
@@ -513,24 +519,31 @@ const isReversed = ref(false)
   margin-top: 15px;
   justify-content: center;
   transition: transform 0.3s ease;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 15px;
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.marker-toggle {
-  background-color: #00000000;
+.marker-toggle:not(.cmd-button) {
+  background-color: rgba(0, 0, 0, 0.5) !important;
   color: #fff;
   border: none;
   font-size: 14px;
   padding: 8px 12px;
+  border-radius: 15px;
 }
 
-.marker-toggle:hover {
-  background-color: #444 !important;
+.marker-toggle:not(.cmd-button):hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
   color: #fff;
-  border: none !important;
+  transform: scale(1.05);
 }
 
 .cmd-button {
-  border: 3px solid white !important;
+  border: none !important;
   font-weight: bold;
   color: black !important;
   text-shadow: 0 0 2px white;
@@ -540,7 +553,6 @@ const isReversed = ref(false)
 
 .cmd-button:hover {
   opacity: 0.8;
-  background-color: inherit !important;
   transform: scale(1.05);
 }
 
@@ -548,6 +560,15 @@ const isReversed = ref(false)
   font-size: 80px;
   color: #fff;
   margin-top: 20px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
 }
 
 .color-button {
@@ -559,6 +580,17 @@ const isReversed = ref(false)
 }
 
 .color-picker-container {
-  display: none; /* Removido, usando controls-container agora */
+  display: none;
+  /* Removido, usando controls-container agora */
+}
+
+.marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 20px;
 }
 </style>

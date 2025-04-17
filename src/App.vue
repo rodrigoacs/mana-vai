@@ -148,9 +148,8 @@ const items = ref([
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  border: 2px solid white;
+  border: none;
   background-color: rgba(0, 0, 0, 0.5);
-  color: white;
   font-weight: bold;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
@@ -160,7 +159,7 @@ const items = ref([
 .player-count-button:hover {
   transform: scale(1.1);
   background-color: rgba(0, 0, 0, 0.7) !important;
-  border-color: white !important;
+  border: none !important;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
 }
 
