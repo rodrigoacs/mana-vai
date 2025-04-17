@@ -17,7 +17,78 @@
         </Button>
       </template>
     </SpeedDial>
+
+    <!-- Botão de sorteio de jogadores -->
+    <Button
+      @click="rollDice"
+      class="dice-button"
+      :disabled="isRolling || counters < 2"
+    >
+      <span class="dice-icon">🎲</span>
+    </Button>
+
+    <!-- Botão para resetar a partida -->
+    <Button
+      @click="confirmReset"
+      class="reset-button"
+    >
+      <span class="reset-icon">🔄</span>
+    </Button>
   </div>
+
+  <!-- Overlay para exibir o resultado do sorteio -->
+  <Transition name="fade">
+    <div
+      v-if="showRollResult"
+      class="dice-result-overlay"
+      @click="hideRollResult"
+    >
+      <div
+        class="dice-result-container"
+        :class="{ 'rolling': isRolling }"
+      >
+        <div
+          v-if="isRolling"
+          class="rolling-dice"
+        >🎲</div>
+        <div
+          v-else
+          class="dice-result"
+        >
+          <div
+            class="result-player"
+            :style="{ backgroundColor: rolledPlayerColor }"
+          >
+            {{ rolledPlayerNumber }}
+          </div>
+          <div class="result-instruction">(Clique para fechar)</div>
+        </div>
+      </div>
+    </div>
+  </Transition>
+
+  <!-- Dialog de confirmação para reset -->
+  <Dialog
+    v-model:visible="showResetConfirm"
+    modal
+    header="Reiniciar partida?"
+    :pt="{
+      root: { class: 'custom-dialog' },
+      header: { class: 'dialog-header' },
+      content: { class: 'dialog-content' }
+    }"
+  >
+    <div class="confirm-buttons">
+      <Button
+        @click="resetGame"
+        class="confirm-button confirm-yes"
+      >Reiniciar</Button>
+      <Button
+        @click="showResetConfirm = false"
+        class="confirm-button confirm-no"
+      >Cancelar</Button>
+    </div>
+  </Dialog>
 
   <div
     class="players-container"
@@ -46,10 +117,11 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, computed } from 'vue'
 import LifeCounter from './components/LifeCounter.vue'
 import SpeedDial from 'primevue/speeddial'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 
 const counters = ref(2)
 const playerColors = ref({})
@@ -71,6 +143,57 @@ const items = ref([
   { icon: 'fa-solid fa-5', command: () => (counters.value = 5) },
   { icon: 'fa-solid fa-6', command: () => (counters.value = 6) },
 ])
+
+// Variáveis para o sorteio de jogadores
+const isRolling = ref(false)
+const showRollResult = ref(false)
+const rolledPlayerNumber = ref(null)
+const rolledPlayerColor = computed(() => {
+  return rolledPlayerNumber.value ? playerColors.value[rolledPlayerNumber.value] || '#111111' : '#111111'
+})
+
+// Variáveis para o reset de jogo
+const showResetConfirm = ref(false)
+
+// Função para sortear um jogador
+function rollDice() {
+  if (counters.value < 2) return
+
+  isRolling.value = true
+  showRollResult.value = true
+
+  // Simulação de animação de rolagem
+  let rollCount = 0
+  const maxRolls = 10
+  const intervalId = setInterval(() => {
+    rolledPlayerNumber.value = Math.floor(Math.random() * counters.value) + 1
+    rollCount++
+
+    if (rollCount >= maxRolls) {
+      clearInterval(intervalId)
+      isRolling.value = false
+    }
+  }, 100)
+}
+
+// Função para esconder o resultado
+function hideRollResult() {
+  showRollResult.value = false
+}
+
+// Função para mostrar diálogo de confirmação de reset
+function confirmReset() {
+  showResetConfirm.value = true
+}
+
+// Função para resetar o jogo
+function resetGame() {
+  // Emitir evento para cada contador de vida para resetar
+  window.dispatchEvent(new CustomEvent('reset-game'))
+
+  // Fechar o diálogo
+  showResetConfirm.value = false
+}
 </script>
 
 <style scoped>
@@ -139,6 +262,8 @@ const items = ref([
   top: 10px;
   left: 10px;
   z-index: 100;
+  display: flex;
+  gap: 15px;
 }
 
 .player-count-button {
@@ -204,5 +329,212 @@ const items = ref([
 
 :deep(.p-speeddial-item) {
   margin: 8px 0;
+}
+
+/* Estilos para o botão de dado */
+.dice-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.dice-button:hover:not(:disabled) {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: none !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+.dice-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dice-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estilos para o overlay de resultado */
+.dice-result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.dice-result-container {
+  background-color: rgba(30, 30, 30, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 250px;
+}
+
+.rolling-dice {
+  font-size: 80px;
+  animation: roll 0.5s infinite;
+}
+
+@keyframes roll {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-30deg);
+  }
+
+  50% {
+    transform: rotate(0deg);
+  }
+
+  75% {
+    transform: rotate(30deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.dice-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.result-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.result-player {
+  font-size: 60px;
+  font-weight: bold;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.result-instruction {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 15px;
+}
+
+/* Animação de fade */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Estilos para o botão de reset */
+.reset-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.reset-button:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: none !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+.reset-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estilos para o diálogo de confirmação */
+.confirm-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.confirm-button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.confirm-yes {
+  background-color: #d32f2f !important;
+  color: white !important;
+  border: none !important;
+}
+
+.confirm-yes:hover {
+  background-color: #b71c1c !important;
+  transform: scale(1.05);
+}
+
+.confirm-no {
+  background-color: #424242 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.confirm-no:hover {
+  background-color: #212121 !important;
+  transform: scale(1.05);
 }
 </style>

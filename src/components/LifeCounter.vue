@@ -98,14 +98,19 @@
         modal
         :header="label"
         :style="{
-          width: '300px',
+          width: '350px',
           transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
           transition: 'transform 0.3s ease'
+        }"
+        :pt="{
+          root: { class: 'custom-dialog' },
+          header: { class: 'dialog-header' },
+          content: { class: 'dialog-content' }
         }"
       >
         <div class="marker">
           <Button
-            class="button"
+            class="button decrease"
             @click="changeMarker(name, -1)"
             icon="pi pi-minus"
           />
@@ -125,7 +130,7 @@
             </transition>
           </div>
           <Button
-            class="button"
+            class="button increase"
             @click="changeMarker(name, 1)"
             icon="pi pi-plus"
           />
@@ -140,14 +145,19 @@
         modal
         header="Dano de Comandante"
         :style="{
-          width: '300px',
+          width: '350px',
           transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
           transition: 'transform 0.3s ease'
+        }"
+        :pt="{
+          root: { class: 'custom-dialog' },
+          header: { class: 'dialog-header' },
+          content: { class: 'dialog-content' }
         }"
       >
         <div class="marker">
           <Button
-            class="button"
+            class="button decrease"
             @click="changeMarker('commander_' + opponent.id, -1)"
             icon="pi pi-minus"
           />
@@ -168,7 +178,7 @@
             </transition>
           </div>
           <Button
-            class="button"
+            class="button increase"
             @click="changeMarker('commander_' + opponent.id, 1)"
             icon="pi pi-plus"
           />
@@ -179,7 +189,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, inject } from 'vue'
+import { ref, computed, watch, onMounted, inject, onBeforeUnmount } from 'vue'
 import Button from 'primevue/button'
 import ColorPicker from 'primevue/colorpicker'
 import Dialog from 'primevue/dialog'
@@ -236,6 +246,14 @@ onMounted(() => {
     colorValue.value = randomColor
     playerColors.value[props.playerId] = randomColor
   }
+
+  // Adicionar event listener para reset do jogo
+  window.addEventListener('reset-game', resetCounter)
+})
+
+// Remover event listener ao desmontar o componente
+onBeforeUnmount(() => {
+  window.removeEventListener('reset-game', resetCounter)
 })
 
 // Calcular a lista de oponentes e suas cores
@@ -268,7 +286,13 @@ watch(playerColors, () => {
   }
 }, { deep: true })
 
+// Função para atualizar a vida
 function changeLife(amount) {
+  // Se estamos diminuindo a vida e já está em 0, não permitir
+  if (amount < 0 && lifeTotal.value <= 0) {
+    return
+  }
+
   lifeTotal.value += amount
   lifeDelta.value += amount
   clearTimeout(lifeDeltaTimeout)
@@ -327,6 +351,11 @@ function changeMarker(name, amount) {
     markerDeltas.value[name] = 0
   }
 
+  // Impedir valores negativos quando tentamos diminuir (-1)
+  if (amount < 0 && markers.value[name] <= 0) {
+    return // Não permite que fique negativo
+  }
+
   markers.value[name] += amount
   markerDeltas.value[name] += amount
 
@@ -352,6 +381,18 @@ const isDead = computed(() => {
 })
 
 const isReversed = ref(false)
+
+// Função para resetar o contador de vida e marcadores
+function resetCounter() {
+  lifeTotal.value = 40
+  lifeDelta.value = 0
+
+  // Resetar todos os marcadores
+  Object.keys(markers.value).forEach(key => {
+    markers.value[key] = 0
+    markerDeltas.value[key] = 0
+  })
+}
 </script>
 
 <style scoped>
@@ -372,6 +413,7 @@ const isReversed = ref(false)
 
 .controls-container {
   position: absolute;
+  align-items: center;
   top: 10px;
   right: 10px;
   display: flex;
@@ -402,8 +444,8 @@ const isReversed = ref(false)
 }
 
 .color-input {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   border: none;
   border-radius: 50%;
   overflow: hidden;
@@ -427,15 +469,16 @@ const isReversed = ref(false)
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-.counter,
-.marker {
+.counter {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 10px 0;
+  margin: 35px 0 25px 0;
   background-color: rgba(0, 0, 0, 0.5);
-  padding: 15px;
+  padding: 15px 20px;
   border-radius: 30px;
+  position: relative;
+  /* Para posicionamento do delta */
 }
 
 .button {
@@ -450,7 +493,8 @@ const isReversed = ref(false)
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  margin: 0 5px;
+  flex-shrink: 0;
+  /* Impede que os botões encolham */
 }
 
 .button:hover {
@@ -466,27 +510,47 @@ const isReversed = ref(false)
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 40px;
+  /* Altura reduzida */
+  margin-bottom: 0;
+  /* Removendo margem, já adicionamos no counter */
 }
 
-.life-total,
-.marker-value {
-  font-size: 32px;
-  font-weight: bold;
-  margin: 0 15px;
-  color: #ffffff;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+.counter .life-total {
+  font-size: 42px;
+  /* Aumentando um pouco mais */
+  line-height: 1;
+  margin: 0 20px;
+}
+
+/* Para telas menores */
+@media (max-width: 768px) {
+  .counter .life-total {
+    font-size: 32px;
+    margin: 0 10px;
+  }
+
+  .button {
+    width: 35px;
+    height: 35px;
+    margin: 0 5px;
+  }
 }
 
 .life-delta {
   position: absolute;
-  top: -30px;
-  font-size: 20px;
+  top: -28px;
+  left: 0;
+  right: 0;
+  font-size: 22px;
   font-weight: bold;
   opacity: 1;
   transition: opacity 0.5s ease;
   color: white;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
   z-index: 9999;
+  width: 100%;
+  text-align: center;
 }
 
 .life-delta.positive {
@@ -504,12 +568,12 @@ const isReversed = ref(false)
 
 .fade-up-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(-10px);
 }
 
 .fade-up-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(10px);
 }
 
 .marker-buttons {
@@ -588,9 +652,91 @@ const isReversed = ref(false)
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 10px 0;
+  margin: 10px 0 30px 0;
+  /* Espaço para o delta abaixo */
   background-color: rgba(0, 0, 0, 0.5);
-  padding: 10px;
+  padding: 15px;
   border-radius: 20px;
+  min-height: 60px;
+  /* Altura reduzida */
+  position: relative;
+  /* Para posicionamento do delta */
+}
+
+/* Ajuste para os marcadores de valor nos diálogos */
+.marker .marker-value-wrapper {
+  height: 45px;
+  margin-bottom: 0;
+}
+
+.marker .marker-value {
+  font-size: 38px;
+  margin: 0 20px;
+}
+
+/* Botões nos diálogos */
+.marker .button {
+  width: 42px;
+  height: 42px;
+  margin: 0 10px;
+}
+
+/* Estilo para os diálogos */
+:deep(.p-dialog-content) {
+  background-color: rgba(30, 30, 30, 0.9);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+:deep(.p-dialog-header) {
+  background-color: rgba(20, 20, 20, 0.95);
+  color: white;
+  padding: 15px 20px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Estilo para os diálogos customizados */
+:deep(.custom-dialog) {
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+:deep(.dialog-header) {
+  background-color: rgba(20, 20, 20, 0.95);
+  color: white;
+  padding: 15px 20px;
+  font-size: 20px;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+:deep(.dialog-content) {
+  background-color: rgba(30, 30, 30, 0.95);
+  color: white;
+  padding: 20px;
+}
+
+.life-total,
+.marker-value {
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  line-height: 1;
+  /* Ajuste para alinhamento vertical */
+}
+
+.marker-value {
+  font-size: 32px;
+  margin: 0 15px;
+}
+
+.marker .life-delta {
+  top: -25px;
 }
 </style>
