@@ -3,17 +3,23 @@
     ref="containerRef"
     class="container"
     :style="{
-      width: counters > 2 ? '50%' : '100%',
       backgroundColor: colorValue
     }"
   >
-    <div class="color-picker-container">
+    <!-- Container para controles no canto superior direito -->
+    <div class="controls-container">
       <input
         type="color"
         class="color-input"
         :value="colorValue"
         @input="updateColorFromInput"
       />
+      <Button
+        class="button reverse-orientation"
+        @click="isReversed = !isReversed"
+      >
+        🔄️
+      </Button>
     </div>
 
     <div
@@ -52,12 +58,6 @@
           @click="changeLife(1)"
           icon="pi pi-plus"
         />
-        <Button
-          class="button reverse-orientation"
-          @click="isReversed = !isReversed"
-        >
-          🔄️
-        </Button>
       </div>
 
       <div
@@ -364,25 +364,49 @@ const isReversed = ref(false)
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #1d1d1d;
-  /* Cor de fallback */
+  background-color: #1d1d1d; /* Cor de fallback */
   width: 100%;
   margin: 0;
   padding: 0;
   flex: 1;
+  position: relative; /* Necessário para posicionamento absoluto do controls-container */
 }
 
-.color-picker-container {
-  margin: 10px 0;
+.controls-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   display: flex;
+  gap: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 5px;
+  border-radius: 5px;
+  z-index: 50;
+}
+
+.reverse-orientation {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  z-index: 10;
+  color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 2px solid white;
+  transition: all 0.3s ease;
+  font-size: 20px;
+}
+
+.reverse-orientation:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 .color-input {
-  width: 50px;
-  height: 50px;
-  border: 3px solid white;
+  width: 40px;
+  height: 40px;
+  border: 2px solid white;
   border-radius: 50%;
   overflow: hidden;
   cursor: pointer;
@@ -526,22 +550,15 @@ const isReversed = ref(false)
   margin-top: 20px;
 }
 
-.reverse-orientation {
-  background-color: #00000000;
-  color: #fff;
-}
-
-.reverse-orientation:hover {
-  background-color: #444 !important;
-  color: #fff;
-  border: none !important;
-}
-
 .color-button {
   display: none;
 }
 
 .custom-color-picker {
   display: none;
+}
+
+.color-picker-container {
+  display: none; /* Removido, usando controls-container agora */
 }
 </style>
