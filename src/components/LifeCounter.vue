@@ -8,11 +8,11 @@
     }"
   >
     <div class="color-picker-container">
-      <ColorPicker
-        v-model="colorValue"
-        format="hex"
-        @change="updateColor"
-        class="custom-color-picker"
+      <input
+        type="color"
+        class="color-input"
+        :value="colorValue"
+        @input="updateColorFromInput"
       />
     </div>
 
@@ -198,9 +198,32 @@ const lifeTotal = ref(40)
 const lifeDelta = ref(0)
 let lifeDeltaTimeout = null
 
+// Estado para controlar exibição do ColorPicker
+const showColorPicker = ref(false)
+
 // Cor do jogador atual
 const colorValue = ref('#111111')
 const containerRef = ref(null)
+
+// Função para atualizar a cor a partir do input nativo
+function updateColorFromInput(event) {
+  const newColor = event.target.value
+  console.log(`LifeCounter - Atualizando cor do jogador ${props.playerId} para ${newColor} (input nativo)`)
+
+  // Atualizar estado local
+  colorValue.value = newColor
+
+  // Atualizar estado global
+  playerColors.value[props.playerId] = newColor
+
+  // Atualizar o estilo diretamente
+  if (containerRef.value) {
+    containerRef.value.style.backgroundColor = newColor
+  }
+
+  // Emitir evento para o componente pai
+  emit('update:color', newColor, props.playerId)
+}
 
 // Inicializar a cor e aplicar ao container
 onMounted(() => {
@@ -215,18 +238,6 @@ onMounted(() => {
   }
 })
 
-// Atualizar a cor quando mudar no ColorPicker
-function updateColor(e) {
-  const newColor = e?.value || colorValue.value
-  console.log(`LifeCounter - Jogador ${props.playerId} alterou sua cor para ${newColor}`)
-
-  // Atualizar o objeto global de cores
-  playerColors.value[props.playerId] = newColor
-
-  // Emitir evento para o App.vue
-  emit('update:color', newColor, props.playerId)
-}
-
 // Calcular a lista de oponentes e suas cores
 const opponents = computed(() => {
   const result = []
@@ -236,9 +247,10 @@ const opponents = computed(() => {
     // Pular o próprio jogador
     if (i === props.playerId) continue
 
-    // Adicionar oponente com sua cor
+    // Acessar diretamente o objeto reativo para máxima reatividade
     result.push({
       id: i,
+      // Acessar a cor atual do jogador a partir do objeto reativo global
       color: playerColors.value[i] || '#111111'
     })
   }
@@ -247,10 +259,12 @@ const opponents = computed(() => {
 })
 
 // Observar mudanças nas cores globais
-watch(() => playerColors.value, () => {
-  // Atualizar a cor do próprio jogador, se necessário
-  if (playerColors.value[props.playerId] !== colorValue.value) {
-    colorValue.value = playerColors.value[props.playerId] || colorValue.value
+watch(playerColors, () => {
+  // Garantir que o componente reflita a cor atual do próprio jogador
+  const myColor = playerColors.value[props.playerId]
+  if (myColor && myColor !== colorValue.value) {
+    console.log(`LifeCounter - Atualizando cor do jogador ${props.playerId} para ${myColor} (via watch global)`)
+    colorValue.value = myColor
   }
 }, { deep: true })
 
@@ -360,15 +374,34 @@ const isReversed = ref(false)
 
 .color-picker-container {
   margin: 10px 0;
-  padding: 5px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 5px;
-  border: 2px solid white;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
 }
 
-.custom-color-picker :deep(.p-colorpicker-preview) {
-  width: 30px;
-  height: 30px;
+.color-input {
+  width: 50px;
+  height: 50px;
+  border: 3px solid white;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  background: none;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+  border: none;
+}
+
+.color-input:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .counter,
@@ -502,5 +535,13 @@ const isReversed = ref(false)
   background-color: #444 !important;
   color: #fff;
   border: none !important;
+}
+
+.color-button {
+  display: none;
+}
+
+.custom-color-picker {
+  display: none;
 }
 </style>
