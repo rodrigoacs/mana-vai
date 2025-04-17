@@ -1,5 +1,5 @@
 <template>
-  <div class="player-selector-container">
+  <div class="player-selector-container no-select">
     <SpeedDial
       :model="items"
       direction="down"
@@ -40,7 +40,7 @@
   <Transition name="fade">
     <div
       v-if="showRollResult"
-      class="dice-result-overlay"
+      class="dice-result-overlay no-select"
       @click="hideRollResult"
     >
       <div
@@ -73,7 +73,7 @@
     modal
     header="Reiniciar partida?"
     :pt="{
-      root: { class: 'custom-dialog' },
+      root: { class: 'custom-dialog no-select' },
       header: { class: 'dialog-header' },
       content: { class: 'dialog-content' }
     }"
@@ -140,8 +140,8 @@ const items = ref([
   { icon: 'fa-solid fa-2', command: () => (counters.value = 2) },
   { icon: 'fa-solid fa-3', command: () => (counters.value = 3) },
   { icon: 'fa-solid fa-4', command: () => (counters.value = 4) },
-  { icon: 'fa-solid fa-5', command: () => (counters.value = 5) },
-  { icon: 'fa-solid fa-6', command: () => (counters.value = 6) },
+  // { icon: 'fa-solid fa-5', command: () => (counters.value = 5) },
+  // { icon: 'fa-solid fa-6', command: () => (counters.value = 6) },
 ])
 
 // Variáveis para o sorteio de jogadores
@@ -536,5 +536,77 @@ function resetGame() {
 .confirm-no:hover {
   background-color: #212121 !important;
   transform: scale(1.05);
+}
+
+/* Estilos responsivos para telas pequenas */
+@media (max-width: 768px) {
+  .player-selector-container {
+    top: 5px;
+    left: 5px;
+    gap: 8px;
+  }
+
+  .player-count-button,
+  .dice-button,
+  .reset-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .player-icon,
+  .dice-icon,
+  .reset-icon {
+    font-size: 18px;
+  }
+
+  :deep(.custom-speeddial-action) {
+    width: 36px;
+    height: 36px;
+    margin: 4px;
+  }
+
+  .dice-result-container {
+    padding: 20px;
+    min-width: 200px;
+  }
+
+  .result-player {
+    width: 100px;
+    height: 100px;
+    font-size: 50px;
+  }
+
+  .rolling-dice {
+    font-size: 60px;
+  }
+
+  /* Ajustar diálogos para telas pequenas */
+  :deep(.custom-dialog) {
+    width: 90vw !important;
+    max-width: 300px;
+  }
+
+  .confirm-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .confirm-button {
+    width: 100%;
+  }
+}
+
+/* Ajuste específico para telas muito pequenas */
+@media (max-width: 360px) {
+  .player-selector-container {
+    gap: 5px;
+  }
+
+  .player-count-button,
+  .dice-button,
+  .reset-button {
+    width: 34px;
+    height: 34px;
+  }
 }
 </style>

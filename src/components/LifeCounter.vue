@@ -1,7 +1,7 @@
 <template>
   <div
     ref="containerRef"
-    class="container"
+    class="container no-select"
     :style="{
       backgroundColor: colorValue
     }"
@@ -29,7 +29,7 @@
 
     <template v-else>
       <div
-        class="counter"
+        class="counter no-select"
         :style="{
           transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
           transition: 'transform 0.3s ease'
@@ -61,7 +61,7 @@
       </div>
 
       <div
-        class="marker-buttons"
+        class="marker-buttons no-select"
         :style="{
           transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
           transition: 'transform 0.3s ease'
@@ -409,6 +409,8 @@ function resetCounter() {
   flex: 1;
   position: relative;
   /* Necessário para posicionamento absoluto do controls-container */
+  overflow: hidden;
+  /* Evitar que elementos extrapolem o contêiner */
 }
 
 .controls-container {
@@ -525,15 +527,161 @@ function resetCounter() {
 
 /* Para telas menores */
 @media (max-width: 768px) {
-  .counter .life-total {
-    font-size: 32px;
-    margin: 0 10px;
+  .counter {
+    padding: 10px 15px;
+    margin: 15px 0 15px 0;
   }
 
   .button {
     width: 35px;
     height: 35px;
     margin: 0 5px;
+  }
+
+  .counter .life-total {
+    font-size: 36px;
+    margin: 0 10px;
+  }
+
+  .life-delta {
+    top: -24px;
+    font-size: 18px;
+  }
+
+  .marker-buttons {
+    padding: 8px;
+    max-width: 90%;
+    gap: 8px;
+    order: 2;
+    /* Posicionar após o contador */
+  }
+
+  .marker-toggle:not(.cmd-button) {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .controls-container {
+    position: relative;
+    top: auto;
+    right: auto;
+    order: 3;
+    /* Colocar após os marcadores */
+    margin-top: 15px;
+    margin-bottom: 10px;
+    width: 90%;
+    max-width: 200px;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 8px;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Ajustar organização do container para posicionar os controles por último */
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* Garantir que o skull não interfira com o layout quando o jogador estiver morto */
+  .skull {
+    order: 2;
+  }
+
+  .reverse-orientation {
+    width: 35px;
+    height: 35px;
+  }
+
+  /* Ajuste para diálogos */
+  :deep(.p-dialog-content) {
+    padding: 15px;
+  }
+
+  .marker {
+    margin: 5px 0 25px 0;
+    padding: 10px;
+  }
+
+  .marker .marker-value {
+    font-size: 30px;
+    margin: 0 10px;
+  }
+
+  .marker .button {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* Ajustar o posicionamento do contador */
+  .counter {
+    order: 1;
+  }
+}
+
+/* Responsividade para telas pequenas */
+@media (max-width: 480px) {
+  .counter {
+    padding: 8px 12px;
+    margin: 10px 0 10px 0;
+  }
+
+  .button {
+    width: 32px;
+    height: 32px;
+    margin: 0 3px;
+  }
+
+  .counter .life-total {
+    font-size: 32px;
+    margin: 0 8px;
+  }
+
+  .life-delta {
+    top: -20px;
+    font-size: 16px;
+  }
+
+  .marker-buttons {
+    padding: 6px;
+    max-width: 95%;
+    gap: 6px;
+  }
+
+  .marker-toggle:not(.cmd-button) {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .skull {
+    font-size: 60px;
+    width: 100px;
+    height: 100px;
+    padding: 15px;
+  }
+
+  /* Ajustar tamanho do color-picker e botão de inversão */
+  .color-input {
+    width: 30px;
+    height: 30px;
+  }
+
+  .reverse-orientation {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+
+  .controls-container {
+    margin-top: 10px;
+    padding: 6px;
+    gap: 8px;
+    width: 95%;
+    max-width: 180px;
   }
 }
 
