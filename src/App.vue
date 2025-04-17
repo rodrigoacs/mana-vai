@@ -21,8 +21,9 @@
   >
     <LifeCounter
       v-for="n in counters"
-      :key="n"
+      :playerId="n"
       :counters="counters"
+      v-model:background-color="backgroundColor"
     />
   </div>
 </template>
@@ -33,7 +34,9 @@ import LifeCounter from './components/LifeCounter.vue'
 import SpeedDial from 'primevue/speeddial'
 import Button from 'primevue/button'
 
-const counters = ref(2)
+const counters = ref(3)
+const backgroundColor = ref('#111111')
+const emit = defineEmits(['update:backgroundColor'])
 
 const items = ref([
   { icon: 'fa-solid fa-1', command: () => (counters.value = 1) },

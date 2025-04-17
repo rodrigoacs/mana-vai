@@ -6,15 +6,12 @@
   >
     <ColorPicker v-model="backgroundColor" />
 
-    <!-- ☠️ Se o jogador estiver morto -->
     <div
       v-if="isDead"
       class="skull"
     >☠️</div>
 
-    <!-- 🎮 Conteúdo principal -->
     <template v-else>
-      <!-- VIDA -->
       <div
         class="counter"
         :style="{
@@ -45,17 +42,14 @@
           @click="changeLife(1)"
           icon="pi pi-plus"
         />
+        <Button
+          class="button reverse-orientation"
+          @click="isReversed = !isReversed"
+        >
+          🔄️
+        </Button>
       </div>
 
-      <!-- Botão para inverter a orientação -->
-      <Button
-        class="button reverse-orientation"
-        @click="isReversed = !isReversed"
-      >
-        🔄️
-      </Button>
-
-      <!-- BOTÕES DE MARCADORES -->
       <div
         class="marker-buttons"
         :style="{
@@ -72,9 +66,21 @@
           {{ label }}
           <span v-if="markers[name] > 0">({{ markers[name] }})</span>
         </Button>
+
+        <Button
+          v-for="(opponent, index) in opponentMarkers"
+          :key="'commander-' + index"
+          class="marker-toggle"
+          :style="{ backgroundColor: opponent.color }"
+          @click="markerDialogs['commander_' + index] = true"
+        >
+          🗡️
+          <span v-if="markers['commander_' + index] > 0">
+            ({{ markers['commander_' + index] }})
+          </span>
+        </Button>
       </div>
 
-      <!-- POPUPS DE MARCADORES -->
       <Dialog
         v-for="(label, name) in markerLabels"
         :key="name + '-dialog'"
@@ -99,7 +105,10 @@
               <span
                 v-if="markerDeltas[name] !== 0"
                 class="life-delta"
-                :class="{ positive: markerDeltas[name] > 0, negative: markerDeltas[name] < 0 }"
+                :class="{
+                  positive: markerDeltas[name] > 0,
+                  negative: markerDeltas[name] < 0
+                }"
               >
                 {{ markerDeltas[name] > 0 ? '+' + markerDeltas[name] : markerDeltas[name] }}
               </span>
@@ -117,25 +126,35 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, defineProps } from 'vue'
+import { ref, computed, watch, defineProps, defineEmits } from 'vue'
 import Button from 'primevue/button'
 import ColorPicker from 'primevue/colorpicker'
 import Dialog from 'primevue/dialog'
+
+
+const props = defineProps({
+  counters: Number,
+  playerId: Number,
+})
 
 const lifeTotal = ref(40)
 const lifeDelta = ref(0)
 let lifeDeltaTimeout = null
 
+const emit = defineEmits(['update:backgroundColor'])
 const backgroundColor = ref('#111111')
+const backgroundColors = {}
 const containerRef = ref(null)
-
-defineProps({
-  counters: Number
-})
 
 watch(backgroundColor, (newColor) => {
   if (containerRef.value) {
     containerRef.value.style.backgroundColor = '#' + newColor.replace('#', '')
+
+    backgroundColors[props.playerId] = newColor
+
+    emit('update:backgroundColor', backgroundColors[props.playerId])
+
+    console.log('Background color for ' + props.playerId + ' players:', newColor)
   }
 })
 
@@ -146,7 +165,6 @@ function changeLife(amount) {
   lifeDeltaTimeout = setTimeout(() => (lifeDelta.value = 0), 1000)
 }
 
-// --- Marcadores unificados (incluindo comandante) ---
 const markers = ref({
   poison: 0,
   energy: 0,
@@ -177,6 +195,14 @@ const markerDialogs = ref({
 
 const markerTimers = {}
 
+const opponentMarkers = computed(() => {
+  const opponentCount = props.counters - 1
+  return Array.from({ length: opponentCount }, (_, index) => ({
+    index,
+    color: `${backgroundColors[props.playerId] || '#111111'}`,
+  }))
+})
+
 function changeMarker(name, amount) {
   markers.value[name] += amount
   markerDeltas.value[name] += amount
@@ -191,7 +217,6 @@ function changeMarker(name, amount) {
   }, 1000)
 }
 
-// --- Computed: verificar derrota ---
 const isDead = computed(() => {
   return (
     lifeTotal.value <= 0 ||
@@ -200,7 +225,6 @@ const isDead = computed(() => {
   )
 })
 
-// --- Controle da orientação ---
 const isReversed = ref(false)
 </script>
 
@@ -305,10 +329,16 @@ const isReversed = ref(false)
 }
 
 .marker-toggle {
-  background-color: #444;
+  background-color: #00000000;
   color: #fff;
   border: none;
   font-size: 14px;
+}
+
+.marker-toggle:hover {
+  background-color: #444 !important;
+  color: #fff;
+  border: none !important;
 }
 
 .marker-toggle:hover {
@@ -322,8 +352,13 @@ const isReversed = ref(false)
 }
 
 .reverse-orientation {
-  margin-top: 20px;
-  background-color: #444;
+  background-color: #00000000;
   color: #fff;
+}
+
+.reverse-orientation:hover {
+  background-color: #444 !important;
+  color: #fff;
+  border: none !important;
 }
 </style>
