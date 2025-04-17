@@ -21,22 +21,31 @@
   >
     <LifeCounter
       v-for="n in counters"
+      :key="'player-' + n"
       :playerId="n"
       :counters="counters"
-      v-model:background-color="backgroundColor"
+      @update:color="updateColor"
     />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, provide } from 'vue'
 import LifeCounter from './components/LifeCounter.vue'
 import SpeedDial from 'primevue/speeddial'
 import Button from 'primevue/button'
 
-const counters = ref(3)
-const backgroundColor = ref('#111111')
-const emit = defineEmits(['update:backgroundColor'])
+const counters = ref(2)
+const playerColors = ref({})
+
+// Provide the reactive playerColors object to all components
+provide('playerColors', playerColors)
+
+// Função para atualizar a cor do jogador
+function updateColor(color, playerId) {
+  console.log("App.vue - Atualizando cor do jogador", playerId, "para", color)
+  playerColors.value[playerId] = color
+}
 
 const items = ref([
   { icon: 'fa-solid fa-1', command: () => (counters.value = 1) },

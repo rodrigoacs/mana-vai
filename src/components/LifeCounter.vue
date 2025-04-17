@@ -2,9 +2,19 @@
   <div
     ref="containerRef"
     class="container"
-    :style="{ width: counters > 2 ? '50%' : '100%' }"
+    :style="{
+      width: counters > 2 ? '50%' : '100%',
+      backgroundColor: colorValue
+    }"
   >
-    <ColorPicker v-model="backgroundColor" />
+    <div class="color-picker-container">
+      <ColorPicker
+        v-model="colorValue"
+        format="hex"
+        @change="updateColor"
+        class="custom-color-picker"
+      />
+    </div>
 
     <div
       v-if="isDead"
@@ -68,15 +78,15 @@
         </Button>
 
         <Button
-          v-for="(opponent, index) in opponentMarkers"
-          :key="'commander-' + index"
-          class="marker-toggle"
+          v-for="opponent in opponents"
+          :key="'commander-' + opponent.id"
+          class="marker-toggle cmd-button"
           :style="{ backgroundColor: opponent.color }"
-          @click="markerDialogs['commander_' + index] = true"
+          @click="markerDialogs['commander_' + opponent.id] = true"
         >
           🗡️
-          <span v-if="markers['commander_' + index] > 0">
-            ({{ markers['commander_' + index] }})
+          <span v-if="markers['commander_' + opponent.id] > 0">
+            ({{ markers['commander_' + opponent.id] }})
           </span>
         </Button>
       </div>
@@ -121,42 +131,128 @@
           />
         </div>
       </Dialog>
+
+      <!-- Diálogos para dano de comandante dos oponentes -->
+      <Dialog
+        v-for="opponent in opponents"
+        :key="'commander_' + opponent.id + '-dialog'"
+        v-model:visible="markerDialogs['commander_' + opponent.id]"
+        modal
+        header="Dano de Comandante"
+        :style="{
+          width: '300px',
+          transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.3s ease'
+        }"
+      >
+        <div class="marker">
+          <Button
+            class="button"
+            @click="changeMarker('commander_' + opponent.id, -1)"
+            icon="pi pi-minus"
+          />
+          <div class="marker-value-wrapper">
+            <span class="marker-value">{{ markers['commander_' + opponent.id] }}</span>
+            <transition name="fade-up">
+              <span
+                v-if="markerDeltas['commander_' + opponent.id] !== 0"
+                class="life-delta"
+                :class="{
+                  positive: markerDeltas['commander_' + opponent.id] > 0,
+                  negative: markerDeltas['commander_' + opponent.id] < 0
+                }"
+              >
+                {{ markerDeltas['commander_' + opponent.id] > 0 ? '+' + markerDeltas['commander_' + opponent.id] :
+                  markerDeltas['commander_' + opponent.id] }}
+              </span>
+            </transition>
+          </div>
+          <Button
+            class="button"
+            @click="changeMarker('commander_' + opponent.id, 1)"
+            icon="pi pi-plus"
+          />
+        </div>
+      </Dialog>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, defineProps, defineEmits } from 'vue'
+import { ref, computed, watch, onMounted, inject } from 'vue'
 import Button from 'primevue/button'
 import ColorPicker from 'primevue/colorpicker'
 import Dialog from 'primevue/dialog'
 
+// Injetar as cores dos jogadores do estado global
+const playerColors = inject('playerColors')
 
 const props = defineProps({
   counters: Number,
   playerId: Number,
 })
 
+const emit = defineEmits(['update:color'])
+
 const lifeTotal = ref(40)
 const lifeDelta = ref(0)
 let lifeDeltaTimeout = null
 
-const emit = defineEmits(['update:backgroundColor'])
-const backgroundColor = ref('#111111')
-const backgroundColors = {}
+// Cor do jogador atual
+const colorValue = ref('#111111')
 const containerRef = ref(null)
 
-watch(backgroundColor, (newColor) => {
-  if (containerRef.value) {
-    containerRef.value.style.backgroundColor = '#' + newColor.replace('#', '')
-
-    backgroundColors[props.playerId] = newColor
-
-    emit('update:backgroundColor', backgroundColors[props.playerId])
-
-    console.log('Background color for ' + props.playerId + ' players:', newColor)
+// Inicializar a cor e aplicar ao container
+onMounted(() => {
+  if (playerColors.value[props.playerId]) {
+    colorValue.value = playerColors.value[props.playerId]
+  } else {
+    // Definir uma cor inicial aleatória para cada jogador
+    const colors = ['#ff5555', '#5555ff', '#55ff55', '#ffff55', '#ff55ff', '#55ffff']
+    const randomColor = colors[props.playerId % colors.length] || '#' + Math.floor(Math.random() * 16777215).toString(16)
+    colorValue.value = randomColor
+    playerColors.value[props.playerId] = randomColor
   }
 })
+
+// Atualizar a cor quando mudar no ColorPicker
+function updateColor(e) {
+  const newColor = e?.value || colorValue.value
+  console.log(`LifeCounter - Jogador ${props.playerId} alterou sua cor para ${newColor}`)
+
+  // Atualizar o objeto global de cores
+  playerColors.value[props.playerId] = newColor
+
+  // Emitir evento para o App.vue
+  emit('update:color', newColor, props.playerId)
+}
+
+// Calcular a lista de oponentes e suas cores
+const opponents = computed(() => {
+  const result = []
+  const opponentCount = props.counters
+
+  for (let i = 1; i <= opponentCount; i++) {
+    // Pular o próprio jogador
+    if (i === props.playerId) continue
+
+    // Adicionar oponente com sua cor
+    result.push({
+      id: i,
+      color: playerColors.value[i] || '#111111'
+    })
+  }
+
+  return result
+})
+
+// Observar mudanças nas cores globais
+watch(() => playerColors.value, () => {
+  // Atualizar a cor do próprio jogador, se necessário
+  if (playerColors.value[props.playerId] !== colorValue.value) {
+    colorValue.value = playerColors.value[props.playerId] || colorValue.value
+  }
+}, { deep: true })
 
 function changeLife(amount) {
   lifeTotal.value += amount
@@ -195,15 +291,32 @@ const markerDialogs = ref({
 
 const markerTimers = {}
 
-const opponentMarkers = computed(() => {
-  const opponentCount = props.counters - 1
-  return Array.from({ length: opponentCount }, (_, index) => ({
-    index,
-    color: `${backgroundColors[props.playerId] || '#111111'}`,
-  }))
+// Inicializar marcadores para os oponentes
+onMounted(() => {
+  // Para cada oponente, garantir que existam os marcadores correspondentes
+  opponents.value.forEach(opponent => {
+    const key = 'commander_' + opponent.id
+    if (markers.value[key] === undefined) {
+      markers.value[key] = 0
+    }
+    if (markerDeltas.value[key] === undefined) {
+      markerDeltas.value[key] = 0
+    }
+    if (markerDialogs.value[key] === undefined) {
+      markerDialogs.value[key] = false
+    }
+  })
 })
 
 function changeMarker(name, amount) {
+  // Garantir que o marcador existe
+  if (markers.value[name] === undefined) {
+    markers.value[name] = 0
+  }
+  if (markerDeltas.value[name] === undefined) {
+    markerDeltas.value[name] = 0
+  }
+
   markers.value[name] += amount
   markerDeltas.value[name] += amount
 
@@ -221,7 +334,10 @@ const isDead = computed(() => {
   return (
     lifeTotal.value <= 0 ||
     markers.value.poison >= 10 ||
-    markers.value.commander >= 21
+    markers.value.commander >= 21 ||
+    Object.keys(markers.value)
+      .filter(key => key.startsWith('commander_'))
+      .some(key => markers.value[key] >= 21)
   )
 })
 
@@ -235,10 +351,24 @@ const isReversed = ref(false)
   align-items: center;
   justify-content: center;
   background-color: #1d1d1d;
+  /* Cor de fallback */
   width: 100%;
   margin: 0;
   padding: 0;
   flex: 1;
+}
+
+.color-picker-container {
+  margin: 10px 0;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  border: 2px solid white;
+}
+
+.custom-color-picker :deep(.p-colorpicker-preview) {
+  width: 30px;
+  height: 30px;
 }
 
 .counter,
@@ -333,6 +463,7 @@ const isReversed = ref(false)
   color: #fff;
   border: none;
   font-size: 14px;
+  padding: 8px 12px;
 }
 
 .marker-toggle:hover {
@@ -341,8 +472,19 @@ const isReversed = ref(false)
   border: none !important;
 }
 
-.marker-toggle:hover {
-  background-color: #666;
+.cmd-button {
+  border: 3px solid white !important;
+  font-weight: bold;
+  color: black !important;
+  text-shadow: 0 0 2px white;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  font-size: 16px !important;
+}
+
+.cmd-button:hover {
+  opacity: 0.8;
+  background-color: inherit !important;
+  transform: scale(1.05);
 }
 
 .skull {
