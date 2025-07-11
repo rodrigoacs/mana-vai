@@ -1,124 +1,126 @@
 <template>
-  <div class="player-selector-container no-select">
-    <SpeedDial
-      :model="items"
-      direction="down"
-      :pt="{
-        menu: { class: 'custom-speeddial-menu' },
-        action: { class: 'custom-speeddial-action' }
-      }"
-    >
-      <template #button="{ toggleCallback }">
-        <Button
-          @click="toggleCallback"
-          class="player-count-button"
-        >
-          <span class="player-icon">🔢</span>
-        </Button>
-      </template>
-    </SpeedDial>
+  <div class="life-counter-view">
+    <div class="player-selector-container no-select">
+      <SpeedDial
+        :model="items"
+        direction="down"
+        :pt="{
+          menu: { class: 'custom-speeddial-menu' },
+          action: { class: 'custom-speeddial-action' }
+        }"
+      >
+        <template #button="{ toggleCallback }">
+          <Button
+            @click="toggleCallback"
+            class="player-count-button"
+          >
+            <span class="player-icon">🔢</span>
+          </Button>
+        </template>
+      </SpeedDial>
 
-    <!-- Botão de sorteio de jogadores -->
-    <Button
-      @click="rollDice"
-      class="dice-button"
-      :disabled="isRolling || counters < 2"
-    >
-      <span class="dice-icon">🎲</span>
-    </Button>
+      <!-- Botão de sorteio de jogadores -->
+      <Button
+        @click="rollDice"
+        class="dice-button"
+        :disabled="isRolling || counters < 2"
+      >
+        <span class="dice-icon">🎲</span>
+      </Button>
 
-    <!-- Botão para resetar a partida -->
-    <Button
-      @click="confirmReset"
-      class="reset-button"
-    >
-      <span class="reset-icon">🔄</span>
-    </Button>
-  </div>
+      <!-- Botão para resetar a partida -->
+      <Button
+        @click="confirmReset"
+        class="reset-button"
+      >
+        <span class="reset-icon">🔄</span>
+      </Button>
+    </div>
 
-  <!-- Overlay para exibir o resultado do sorteio -->
-  <Transition name="fade">
-    <div
-      v-if="showRollResult"
-      class="dice-result-overlay no-select"
-      @click="hideRollResult"
-    >
+    <!-- Overlay para exibir o resultado do sorteio -->
+    <Transition name="fade">
       <div
-        class="dice-result-container"
-        :class="{ 'rolling': isRolling }"
+        v-if="showRollResult"
+        class="dice-result-overlay no-select"
+        @click="hideRollResult"
       >
         <div
-          v-if="isRolling"
-          class="rolling-dice"
-        >🎲</div>
-        <div
-          v-else
-          class="dice-result"
+          class="dice-result-container"
+          :class="{ 'rolling': isRolling }"
         >
           <div
-            class="result-player"
-            :style="{ backgroundColor: rolledPlayerColor }"
+            v-if="isRolling"
+            class="rolling-dice"
+          >🎲</div>
+          <div
+            v-else
+            class="dice-result"
           >
-            {{ rolledPlayerNumber }}
+            <div
+              class="result-player"
+              :style="{ backgroundColor: rolledPlayerColor }"
+            >
+              {{ rolledPlayerNumber }}
+            </div>
+            <div class="result-instruction">(Clique para fechar)</div>
           </div>
-          <div class="result-instruction">(Clique para fechar)</div>
         </div>
       </div>
-    </div>
-  </Transition>
+    </Transition>
 
-  <!-- Dialog de confirmação para reset -->
-  <Dialog
-    v-model:visible="showResetConfirm"
-    modal
-    header="Reiniciar partida?"
-    :pt="{
-      root: { class: 'custom-dialog no-select' },
-      header: { class: 'dialog-header' },
-      content: { class: 'dialog-content' }
-    }"
-  >
-    <div class="confirm-buttons">
-      <Button
-        @click="resetGame"
-        class="confirm-button confirm-yes"
-      >Reiniciar</Button>
-      <Button
-        @click="showResetConfirm = false"
-        class="confirm-button confirm-no"
-      >Cancelar</Button>
-    </div>
-  </Dialog>
-
-  <div
-    class="players-container"
-    :class="{
-      'grid-layout': counters > 2,
-      'column-layout': counters <= 2,
-      'one-player': counters === 1,
-      'two-players': counters === 2,
-      'three-players': counters === 3,
-      'four-players': counters === 4,
-      'five-players': counters === 5,
-      'six-players': counters === 6
-    }"
-  >
-    <LifeCounter
-      v-for="n in counters"
-      :key="'player-' + n"
-      :playerId="n"
-      :counters="counters"
-      @update:color="updateColor"
-      :class="{
-        'full-width-player': (counters === 3 && n === 3) || (counters === 5 && n === 5)
+    <!-- Dialog de confirmação para reset -->
+    <Dialog
+      v-model:visible="showResetConfirm"
+      modal
+      header="Reiniciar partida?"
+      :pt="{
+        root: { class: 'custom-dialog no-select' },
+        header: { class: 'dialog-header' },
+        content: { class: 'dialog-content' }
       }"
-    />
+    >
+      <div class="confirm-buttons">
+        <Button
+          @click="resetGame"
+          class="confirm-button confirm-yes"
+        >Reiniciar</Button>
+        <Button
+          @click="showResetConfirm = false"
+          class="confirm-button confirm-no"
+        >Cancelar</Button>
+      </div>
+    </Dialog>
+
+    <div
+      class="players-container"
+      :class="{
+        'grid-layout': counters > 2,
+        'column-layout': counters <= 2,
+        'one-player': counters === 1,
+        'two-players': counters === 2,
+        'three-players': counters === 3,
+        'four-players': counters === 4,
+        'five-players': counters === 5,
+        'six-players': counters === 6
+      }"
+    >
+      <LifeCounter
+        v-for="n in counters"
+        :key="'player-' + n"
+        :playerId="n"
+        :counters="counters"
+        @update:color="updateColor"
+        :class="{
+          'full-width-player': (counters === 3 && n === 3) || (counters === 5 && n === 5)
+        }"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, provide, computed } from 'vue'
-import LifeCounter from './components/LifeCounter.vue'
+import LifeCounter from '../components/LifeCounter.vue'
 import SpeedDial from 'primevue/speeddial'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -131,7 +133,7 @@ provide('playerColors', playerColors)
 
 // Função para atualizar a cor do jogador
 function updateColor(color, playerId) {
-  console.log("App.vue - Atualizando cor do jogador", playerId, "para", color)
+  console.log("LifeCounterView - Atualizando cor do jogador", playerId, "para", color)
   playerColors.value[playerId] = color
 }
 
@@ -197,73 +199,41 @@ function resetGame() {
 </script>
 
 <style scoped>
-.players-container {
-  display: flex;
+.life-counter-view {
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  position: relative;
   overflow: hidden;
-  flex-wrap: wrap;
 }
 
-.column-layout {
-  flex-direction: column;
-  flex-wrap: nowrap;
+.players-container {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  gap: 2px;
 }
 
 .grid-layout {
-  align-content: stretch;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
-/* Layouts de grid básicos */
-.grid-layout :deep(.container) {
-  box-sizing: border-box;
+.column-layout {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, 1fr);
 }
 
-/* Layout para 3 e 4 jogadores (2x2) */
-.three-players :deep(.container),
-.four-players :deep(.container) {
-  width: 50% !important;
-  height: 50vh !important;
-  flex: 0 0 50%;
-}
-
-/* Layout para 5 e 6 jogadores (2x3) */
-.five-players :deep(.container),
-.six-players :deep(.container) {
-  width: 50% !important;
-  height: 33.333vh !important;
-  flex: 0 0 50%;
-}
-
-/* Jogadores que ocupam toda a largura */
-.three-players :deep(.full-width-player),
-.five-players :deep(.full-width-player) {
-  width: 100% !important;
-  flex-basis: 100%;
-}
-
-/* Layout para 1 e 2 jogadores */
-.column-layout :deep(.container) {
-  width: 100% !important;
-}
-
-/* Quando há apenas 1 jogador */
-.one-player :deep(.container) {
-  height: 100vh !important;
-}
-
-/* Quando há 2 jogadores */
-.two-players :deep(.container) {
-  height: 50vh !important;
+.full-width-player {
+  grid-column: span 2;
 }
 
 .player-selector-container {
-  position: absolute;
-  top: 10px;
+  position: fixed;
+  top: 75px;
   left: 10px;
   z-index: 100;
   display: flex;
-  gap: 15px;
+  gap: 10px;
 }
 
 .player-count-button {
@@ -273,19 +243,14 @@ function resetGame() {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  border: none;
   background-color: rgba(0, 0, 0, 0.5);
-  font-weight: bold;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
-  padding: 0;
 }
 
 .player-count-button:hover {
   transform: scale(1.1);
   background-color: rgba(0, 0, 0, 0.7) !important;
-  border: none !important;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
 }
 
 .player-icon {
@@ -293,6 +258,35 @@ function resetGame() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Configuração específica para número de jogadores */
+.one-player {
+  grid-template-rows: 1fr;
+}
+
+.two-players {
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.three-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.four-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.five-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.six-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 :deep(.custom-speeddial-menu) {
@@ -541,7 +535,7 @@ function resetGame() {
 /* Estilos responsivos para telas pequenas */
 @media (max-width: 768px) {
   .player-selector-container {
-    top: 5px;
+    top: 70px;
     left: 5px;
     gap: 8px;
   }

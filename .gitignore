@@ -28,3 +28,6 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+all-cards-20250417092449.json
+default-cards-20250417213929.json
