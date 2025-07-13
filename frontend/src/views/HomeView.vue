@@ -9,10 +9,10 @@
         <div class="card-title">Contador de Vida</div>
       </router-link>
       
-      <router-link to="/deck-validator" class="nav-card">
+      <!-- <router-link to="/deck-validator" class="nav-card">
         <div class="card-icon">📝</div>
         <div class="card-title">Validador de Deck</div>
-      </router-link>
+      </router-link> -->
       
       <router-link to="/tournament" class="nav-card">
         <div class="card-icon">🏆</div>

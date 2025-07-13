@@ -26,7 +26,7 @@
         exact-active-class="active"
         @click="closeMenu"
       >
-        <i class="nav-icon">🏠</i>
+        <span class="nav-icon">🏠</span>
         <span class="nav-text">Home</span>
       </router-link>
       
@@ -36,19 +36,19 @@
         active-class="active"
         @click="closeMenu"
       >
-        <i class="nav-icon">❤️</i>
+        <span class="nav-icon">❤️</span>
         <span class="nav-text">Contador de Vida</span>
       </router-link>
       
-      <router-link 
+      <!-- <router-link 
         to="/deck-validator" 
         class="nav-link" 
         active-class="active"
         @click="closeMenu"
       >
-        <i class="nav-icon">📝</i>
+        <span class="nav-icon">📝</span>
         <span class="nav-text">Validador de Deck</span>
-      </router-link>
+      </router-link> -->
       
       <router-link 
         to="/tournament" 
@@ -56,7 +56,7 @@
         active-class="active"
         @click="closeMenu"
       >
-        <i class="nav-icon">🏆</i>
+        <span class="nav-icon">🏆</span>
         <span class="nav-text">Torneios</span>
       </router-link>
     </div>
