@@ -1,43 +1,40 @@
 <template>
   <div class="life-counter-view">
     <div class="player-selector-container no-select">
-      <SpeedDial
-        :model="items"
-        direction="down"
-        :pt="{
-          menu: { class: 'custom-speeddial-menu' },
-          action: { class: 'custom-speeddial-action' }
-        }"
+      <Dropdown
+        v-model="counters"
+        :options="playerCountOptions"
+        optionLabel="label"
+        optionValue="value"
+        class="player-count-select"
       >
-        <template #button="{ toggleCallback }">
-          <Button
-            @click="toggleCallback"
-            class="player-count-button"
-          >
-            <span class="player-icon">🔢</span>
-          </Button>
+        <template #value>
+          <i class="fa-solid fa-user-group"></i>
         </template>
-      </SpeedDial>
+        <template #option="slotProps">
+          <div class="player-option">
+            <i :class="slotProps.option.icon"></i>
+            <span>{{ slotProps.option.label }}</span>
+          </div>
+        </template>
+      </Dropdown>
 
-      <!-- Botão de sorteio de jogadores -->
       <Button
         @click="rollDice"
         class="dice-button"
         :disabled="isRolling || counters < 2"
       >
-        <span class="dice-icon">🎲</span>
+        <span class="dice-icon"><i class="fa-solid fa-dice"></i></span>
       </Button>
 
-      <!-- Botão para resetar a partida -->
       <Button
         @click="confirmReset"
         class="reset-button"
       >
-        <span class="reset-icon">🔄</span>
+        <span class="reset-icon"><i class="fa-solid fa-rotate"></i></span>
       </Button>
     </div>
 
-    <!-- Overlay para exibir o resultado do sorteio -->
     <Transition name="fade">
       <div
         v-if="showRollResult"
@@ -51,7 +48,7 @@
           <div
             v-if="isRolling"
             class="rolling-dice"
-          >🎲</div>
+          ><i class="fa-solid fa-dice"></i></div>
           <div
             v-else
             class="dice-result"
@@ -68,7 +65,6 @@
       </div>
     </Transition>
 
-    <!-- Dialog de confirmação para reset -->
     <Dialog
       v-model:visible="showResetConfirm"
       modal
@@ -110,6 +106,8 @@
         :playerId="n"
         :counters="counters"
         @update:color="updateColor"
+        :isMonarch="monarchPlayerId === n"
+        @set-monarch="setMonarch"
         :class="{
           'full-width-player': (counters === 3 && n === 3) || (counters === 5 && n === 5)
         }"
@@ -121,32 +119,27 @@
 <script setup>
 import { ref, provide, computed } from 'vue'
 import LifeCounter from '../components/LifeCounter.vue'
-import SpeedDial from 'primevue/speeddial'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import Dropdown from 'primevue/dropdown'
 
-const counters = ref(2)
+const counters = ref(4)
 const playerColors = ref({})
+const monarchPlayerId = ref(null)
 
-// Provide the reactive playerColors object to all components
 provide('playerColors', playerColors)
 
-// Função para atualizar a cor do jogador
 function updateColor(color, playerId) {
-  console.log("LifeCounterView - Atualizando cor do jogador", playerId, "para", color)
   playerColors.value[playerId] = color
 }
 
-const items = ref([
-  { icon: 'fa-solid fa-1', command: () => (counters.value = 1) },
-  { icon: 'fa-solid fa-2', command: () => (counters.value = 2) },
-  { icon: 'fa-solid fa-3', command: () => (counters.value = 3) },
-  { icon: 'fa-solid fa-4', command: () => (counters.value = 4) },
-  // { icon: 'fa-solid fa-5', command: () => (counters.value = 5) },
-  // { icon: 'fa-solid fa-6', command: () => (counters.value = 6) },
+const playerCountOptions = ref([
+  { label: '1', value: 1, icon: 'fa-solid fa-users' },
+  { label: '2', value: 2, icon: 'fa-solid fa-users' },
+  { label: '3', value: 3, icon: 'fa-solid fa-users' },
+  { label: '4', value: 4, icon: 'fa-solid fa-users' },
 ])
 
-// Variáveis para o sorteio de jogadores
 const isRolling = ref(false)
 const showRollResult = ref(false)
 const rolledPlayerNumber = ref(null)
@@ -154,23 +147,22 @@ const rolledPlayerColor = computed(() => {
   return rolledPlayerNumber.value ? playerColors.value[rolledPlayerNumber.value] || '#111111' : '#111111'
 })
 
-// Variáveis para o reset de jogo
 const showResetConfirm = ref(false)
 
-// Função para sortear um jogador
+function setMonarch(playerId) {
+  monarchPlayerId.value = monarchPlayerId.value === playerId ? null : playerId
+}
+
 function rollDice() {
   if (counters.value < 2) return
-
   isRolling.value = true
   showRollResult.value = true
 
-  // Simulação de animação de rolagem
   let rollCount = 0
   const maxRolls = 10
   const intervalId = setInterval(() => {
     rolledPlayerNumber.value = Math.floor(Math.random() * counters.value) + 1
     rollCount++
-
     if (rollCount >= maxRolls) {
       clearInterval(intervalId)
       isRolling.value = false
@@ -178,22 +170,16 @@ function rollDice() {
   }, 100)
 }
 
-// Função para esconder o resultado
 function hideRollResult() {
   showRollResult.value = false
 }
 
-// Função para mostrar diálogo de confirmação de reset
 function confirmReset() {
   showResetConfirm.value = true
 }
 
-// Função para resetar o jogo
 function resetGame() {
-  // Emitir evento para cada contador de vida para resetar
   window.dispatchEvent(new CustomEvent('reset-game'))
-
-  // Fechar o diálogo
   showResetConfirm.value = false
 }
 </script>
@@ -246,11 +232,13 @@ function resetGame() {
   background-color: rgba(0, 0, 0, 0.5);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
+  border: none;
 }
 
 .player-count-button:hover {
   transform: scale(1.1);
   background-color: rgba(0, 0, 0, 0.7) !important;
+  border: none !important;
 }
 
 .player-icon {
@@ -413,6 +401,45 @@ function resetGame() {
   }
 }
 
+.player-count-select {
+  width: 45px;
+  height: 45px;
+  border-radius: 50% !important;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-count-select:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.p-select-dropdown {
+  display: none !important;
+}
+
+:deep(.p-select-dropdown) {
+  display: none;
+}
+
+:deep(.p-dropdown-label) {
+  padding: 0;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .dice-result {
   display: flex;
   flex-direction: column;
@@ -532,6 +559,10 @@ function resetGame() {
   transform: scale(1.05);
 }
 
+i {
+  color: white;
+}
+
 /* Estilos responsivos para telas pequenas */
 @media (max-width: 768px) {
   .player-selector-container {
@@ -540,23 +571,19 @@ function resetGame() {
     gap: 8px;
   }
 
-  .player-count-button,
+  /* AJUSTE AQUI: Reduz o tamanho de todos os botões de controle */
+  .player-count-select,
   .dice-button,
   .reset-button {
     width: 38px;
     height: 38px;
   }
 
-  .player-icon,
+  /* AJUSTE AQUI: Reduz o tamanho dos ícones dentro dos botões */
   .dice-icon,
-  .reset-icon {
+  .reset-icon,
+  :deep(.p-dropdown-label) {
     font-size: 18px;
-  }
-
-  :deep(.custom-speeddial-action) {
-    width: 36px;
-    height: 36px;
-    margin: 4px;
   }
 
   .dice-result-container {
@@ -574,7 +601,6 @@ function resetGame() {
     font-size: 60px;
   }
 
-  /* Ajustar diálogos para telas pequenas */
   :deep(.custom-dialog) {
     width: 90vw !important;
     max-width: 300px;
@@ -590,13 +616,13 @@ function resetGame() {
   }
 }
 
-/* Ajuste específico para telas muito pequenas */
 @media (max-width: 360px) {
   .player-selector-container {
     gap: 5px;
   }
 
-  .player-count-button,
+  /* AJUSTE AQUI: Reduz ainda mais para telas muito pequenas */
+  .player-count-select,
   .dice-button,
   .reset-button {
     width: 34px;

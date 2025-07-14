@@ -1,62 +1,58 @@
 <template>
   <nav class="nav-menu">
-    <router-link 
-      to="/" 
+    <router-link
+      to="/"
       class="nav-logo"
       @click="closeMenu"
     >
       <span class="logo-text">Mana VAI</span>
     </router-link>
-    
-    <div 
-      class="mobile-toggle" 
+
+    <div
+      class="mobile-toggle"
       @click="toggleMenu"
     >
-      <div class="menu-icon" :class="{ 'open': isMenuOpen }">
+      <div
+        class="menu-icon"
+        :class="{ 'open': isMenuOpen }"
+      >
         <span></span>
         <span></span>
         <span></span>
       </div>
     </div>
-    
-    <div class="nav-links" :class="{ 'open': isMenuOpen }">
-      <router-link 
-        to="/" 
-        class="nav-link" 
+
+    <div
+      class="nav-links"
+      :class="{ 'open': isMenuOpen }"
+    >
+      <router-link
+        to="/"
+        class="nav-link"
         exact-active-class="active"
         @click="closeMenu"
       >
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
         <span class="nav-text">Home</span>
       </router-link>
-      
-      <router-link 
-        to="/life-counter" 
-        class="nav-link" 
+
+      <router-link
+        to="/life-counter"
+        class="nav-link"
         active-class="active"
         @click="closeMenu"
       >
-        <span class="nav-icon">❤️</span>
+        <span class="nav-icon"><i class="fa-solid fa-heart-pulse"></i></span>
         <span class="nav-text">Contador de Vida</span>
       </router-link>
-      
-      <!-- <router-link 
-        to="/deck-validator" 
-        class="nav-link" 
+
+      <router-link
+        to="/tournament"
+        class="nav-link"
         active-class="active"
         @click="closeMenu"
       >
-        <span class="nav-icon">📝</span>
-        <span class="nav-text">Validador de Deck</span>
-      </router-link> -->
-      
-      <router-link 
-        to="/tournament" 
-        class="nav-link" 
-        active-class="active"
-        @click="closeMenu"
-      >
-        <span class="nav-icon">🏆</span>
+        <span class="nav-icon"><i class="fa-solid fa-trophy"></i></span>
         <span class="nav-text">Torneios</span>
       </router-link>
     </div>
@@ -70,7 +66,7 @@ const isMenuOpen = ref(false)
 
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
-  
+
   // Prevent scrolling when menu is open on mobile
   if (isMenuOpen.value) {
     document.body.style.overflow = 'hidden'
@@ -211,7 +207,7 @@ function closeMenu() {
   .mobile-toggle {
     display: block;
   }
-  
+
   .nav-links {
     position: fixed;
     top: 60px;
@@ -225,15 +221,15 @@ function closeMenu() {
     transition: transform 0.3s ease;
     z-index: 1000;
   }
-  
+
   .nav-links.open {
     transform: translateX(0);
   }
-  
+
   .nav-link {
     width: 100%;
     padding: 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
-</style> 
+</style>

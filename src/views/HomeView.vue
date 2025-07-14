@@ -2,20 +2,21 @@
   <div class="home-view">
     <h1>Mana VAI</h1>
     <p>Escolha uma opção abaixo para começar:</p>
-    
+
     <div class="nav-cards">
-      <router-link to="/life-counter" class="nav-card">
-        <div class="card-icon">❤️</div>
+      <router-link
+        to="/life-counter"
+        class="nav-card"
+      >
+        <div class="card-icon"><i class="fa-solid fa-heart-pulse"></i></div>
         <div class="card-title">Contador de Vida</div>
       </router-link>
-      
-      <!-- <router-link to="/deck-validator" class="nav-card">
-        <div class="card-icon">📝</div>
-        <div class="card-title">Validador de Deck</div>
-      </router-link> -->
-      
-      <router-link to="/tournament" class="nav-card">
-        <div class="card-icon">🏆</div>
+
+      <router-link
+        to="/tournament"
+        class="nav-card"
+      >
+        <div class="card-icon"><i class="fa-solid fa-trophy"></i></div>
         <div class="card-title">Torneios</div>
       </router-link>
     </div>
@@ -98,14 +99,14 @@ p {
   h1 {
     font-size: 2.2rem;
   }
-  
+
   .nav-card {
     width: 150px;
     height: 150px;
   }
-  
+
   .card-icon {
     font-size: 2.5rem;
   }
 }
-</style> 
+</style>
