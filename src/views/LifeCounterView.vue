@@ -1,0 +1,632 @@
+<template>
+  <div class="life-counter-view">
+    <div class="player-selector-container no-select">
+      <Dropdown
+        v-model="counters"
+        :options="playerCountOptions"
+        optionLabel="label"
+        optionValue="value"
+        class="player-count-select"
+      >
+        <template #value>
+          <i class="fa-solid fa-user-group"></i>
+        </template>
+        <template #option="slotProps">
+          <div class="player-option">
+            <i :class="slotProps.option.icon"></i>
+            <span>{{ slotProps.option.label }}</span>
+          </div>
+        </template>
+      </Dropdown>
+
+      <Button
+        @click="rollDice"
+        class="dice-button"
+        :disabled="isRolling || counters < 2"
+      >
+        <span class="dice-icon"><i class="fa-solid fa-dice"></i></span>
+      </Button>
+
+      <Button
+        @click="confirmReset"
+        class="reset-button"
+      >
+        <span class="reset-icon"><i class="fa-solid fa-rotate"></i></span>
+      </Button>
+    </div>
+
+    <Transition name="fade">
+      <div
+        v-if="showRollResult"
+        class="dice-result-overlay no-select"
+        @click="hideRollResult"
+      >
+        <div
+          class="dice-result-container"
+          :class="{ 'rolling': isRolling }"
+        >
+          <div
+            v-if="isRolling"
+            class="rolling-dice"
+          ><i class="fa-solid fa-dice"></i></div>
+          <div
+            v-else
+            class="dice-result"
+          >
+            <div
+              class="result-player"
+              :style="{ backgroundColor: rolledPlayerColor }"
+            >
+              {{ rolledPlayerNumber }}
+            </div>
+            <div class="result-instruction">(Clique para fechar)</div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Dialog
+      v-model:visible="showResetConfirm"
+      modal
+      header="Reiniciar partida?"
+      :pt="{
+        root: { class: 'custom-dialog no-select' },
+        header: { class: 'dialog-header' },
+        content: { class: 'dialog-content' }
+      }"
+    >
+      <div class="confirm-buttons">
+        <Button
+          @click="resetGame"
+          class="confirm-button confirm-yes"
+        >Reiniciar</Button>
+        <Button
+          @click="showResetConfirm = false"
+          class="confirm-button confirm-no"
+        >Cancelar</Button>
+      </div>
+    </Dialog>
+
+    <div
+      class="players-container"
+      :class="{
+        'grid-layout': counters > 2,
+        'column-layout': counters <= 2,
+        'one-player': counters === 1,
+        'two-players': counters === 2,
+        'three-players': counters === 3,
+        'four-players': counters === 4,
+        'five-players': counters === 5,
+        'six-players': counters === 6
+      }"
+    >
+      <LifeCounter
+        v-for="n in counters"
+        :key="'player-' + n"
+        :playerId="n"
+        :counters="counters"
+        @update:color="updateColor"
+        :isMonarch="monarchPlayerId === n"
+        @set-monarch="setMonarch"
+        :class="{
+          'full-width-player': (counters === 3 && n === 3) || (counters === 5 && n === 5)
+        }"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, provide, computed } from 'vue'
+import LifeCounter from '../components/LifeCounter.vue'
+import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import Dropdown from 'primevue/dropdown'
+
+const counters = ref(4)
+const playerColors = ref({})
+const monarchPlayerId = ref(null)
+
+provide('playerColors', playerColors)
+
+function updateColor(color, playerId) {
+  playerColors.value[playerId] = color
+}
+
+const playerCountOptions = ref([
+  { label: '1', value: 1, icon: 'fa-solid fa-users' },
+  { label: '2', value: 2, icon: 'fa-solid fa-users' },
+  { label: '3', value: 3, icon: 'fa-solid fa-users' },
+  { label: '4', value: 4, icon: 'fa-solid fa-users' },
+])
+
+const isRolling = ref(false)
+const showRollResult = ref(false)
+const rolledPlayerNumber = ref(null)
+const rolledPlayerColor = computed(() => {
+  return rolledPlayerNumber.value ? playerColors.value[rolledPlayerNumber.value] || '#111111' : '#111111'
+})
+
+const showResetConfirm = ref(false)
+
+function setMonarch(playerId) {
+  monarchPlayerId.value = monarchPlayerId.value === playerId ? null : playerId
+}
+
+function rollDice() {
+  if (counters.value < 2) return
+  isRolling.value = true
+  showRollResult.value = true
+
+  let rollCount = 0
+  const maxRolls = 10
+  const intervalId = setInterval(() => {
+    rolledPlayerNumber.value = Math.floor(Math.random() * counters.value) + 1
+    rollCount++
+    if (rollCount >= maxRolls) {
+      clearInterval(intervalId)
+      isRolling.value = false
+    }
+  }, 100)
+}
+
+function hideRollResult() {
+  showRollResult.value = false
+}
+
+function confirmReset() {
+  showResetConfirm.value = true
+}
+
+function resetGame() {
+  window.dispatchEvent(new CustomEvent('reset-game'))
+  showResetConfirm.value = false
+}
+</script>
+
+<style scoped>
+.life-counter-view {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.players-container {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  gap: 2px;
+}
+
+.grid-layout {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.column-layout {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.full-width-player {
+  grid-column: span 2;
+}
+
+.player-selector-container {
+  position: fixed;
+  top: 75px;
+  left: 10px;
+  z-index: 100;
+  display: flex;
+  gap: 10px;
+}
+
+.player-count-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.player-count-button:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: none !important;
+}
+
+.player-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Configuração específica para número de jogadores */
+.one-player {
+  grid-template-rows: 1fr;
+}
+
+.two-players {
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.three-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.four-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.five-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.six-players {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+:deep(.custom-speeddial-menu) {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 8px;
+  border: 2px solid white;
+  margin-top: 5px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+:deep(.custom-speeddial-action) {
+  width: 40px;
+  height: 40px;
+  margin: 5px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 2px solid white;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+:deep(.custom-speeddial-action:hover) {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+:deep(.p-speeddial-item) {
+  margin: 8px 0;
+}
+
+/* Estilos para o botão de dado */
+.dice-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.dice-button:hover:not(:disabled) {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: none !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+.dice-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dice-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estilos para o overlay de resultado */
+.dice-result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.dice-result-container {
+  background-color: rgba(30, 30, 30, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 250px;
+}
+
+.rolling-dice {
+  font-size: 80px;
+  animation: roll 0.5s infinite;
+}
+
+@keyframes roll {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-30deg);
+  }
+
+  50% {
+    transform: rotate(0deg);
+  }
+
+  75% {
+    transform: rotate(30deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.player-count-select {
+  width: 45px;
+  height: 45px;
+  border-radius: 50% !important;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-count-select:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.p-select-dropdown {
+  display: none !important;
+}
+
+:deep(.p-select-dropdown) {
+  display: none;
+}
+
+:deep(.p-dropdown-label) {
+  padding: 0;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dice-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.result-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.result-player {
+  font-size: 60px;
+  font-weight: bold;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.result-instruction {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 15px;
+}
+
+/* Animação de fade */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Estilos para o botão de reset */
+.reset-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.reset-button:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: none !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+.reset-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estilos para o diálogo de confirmação */
+.confirm-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.confirm-button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.confirm-yes {
+  background-color: #d32f2f !important;
+  color: white !important;
+  border: none !important;
+}
+
+.confirm-yes:hover {
+  background-color: #b71c1c !important;
+  transform: scale(1.05);
+}
+
+.confirm-no {
+  background-color: #424242 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.confirm-no:hover {
+  background-color: #212121 !important;
+  transform: scale(1.05);
+}
+
+i {
+  color: white;
+}
+
+/* Estilos responsivos para telas pequenas */
+@media (max-width: 768px) {
+  .player-selector-container {
+    top: 70px;
+    left: 5px;
+    gap: 8px;
+  }
+
+  /* AJUSTE AQUI: Reduz o tamanho de todos os botões de controle */
+  .player-count-select,
+  .dice-button,
+  .reset-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* AJUSTE AQUI: Reduz o tamanho dos ícones dentro dos botões */
+  .dice-icon,
+  .reset-icon,
+  :deep(.p-dropdown-label) {
+    font-size: 18px;
+  }
+
+  .dice-result-container {
+    padding: 20px;
+    min-width: 200px;
+  }
+
+  .result-player {
+    width: 100px;
+    height: 100px;
+    font-size: 50px;
+  }
+
+  .rolling-dice {
+    font-size: 60px;
+  }
+
+  :deep(.custom-dialog) {
+    width: 90vw !important;
+    max-width: 300px;
+  }
+
+  .confirm-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .confirm-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .player-selector-container {
+    gap: 5px;
+  }
+
+  /* AJUSTE AQUI: Reduz ainda mais para telas muito pequenas */
+  .player-count-select,
+  .dice-button,
+  .reset-button {
+    width: 34px;
+    height: 34px;
+  }
+}
+</style>
