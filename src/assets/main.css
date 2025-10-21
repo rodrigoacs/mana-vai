@@ -1,6 +1,54 @@
-@import '@fortawesome/fontawesome-free/css/all.css';
-@import 'primeicons/primeicons.css';
+/* Importar a fonte 'Poppins' */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
+/* *** CORREÇÃO AQUI: Reimportar os PrimeIcons *** */
+@import 'primeicons/primeicons.css';
+/* ********************************************** */
+
+/*
+  ================================================
+  1. VARIÁVEIS DE COR
+  ================================================
+*/
+:root {
+  --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --bg-primary: #111317;
+  /* Fundo principal */
+  --bg-secondary: #1a1d23;
+  /* Fundo sutilmente mais claro */
+  --bg-card: #20242c;
+  /* Fundo de cards, inputs */
+  --border-color: #313742;
+  /* Bordas */
+
+  --text-primary: #f1f5f9;
+  /* Texto principal (branco) */
+  --text-secondary: #94a3b8;
+  /* Texto secundário (cinza) */
+  --text-placeholder: #64748b;
+  /* Cor para placeholders */
+
+  --accent-primary: #06b6d4;
+  /* Ciano vibrante */
+  --accent-primary-hover: #0891b2;
+  --accent-primary-focus: #0e7490;
+  --accent-primary-glow: rgba(6, 182, 212, 0.2);
+  /* Suavizado */
+  --accent-primary-text: #0f172a;
+  /* Texto para botões com fundo ciano */
+
+
+  --status-success: #22c55e;
+  --status-warning: #f59e0b;
+  --status-danger: #ef4444;
+}
+
+/*
+  ================================================
+  2. ESTILOS GLOBAIS (Body, HTML)
+  ================================================
+*/
 * {
   box-sizing: border-box;
   margin: 0;
@@ -8,47 +56,381 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
-  overscroll-behavior: none;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-}
-
-#app {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
+html {
+  /* Scroll suave */
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: #1b1b1b;
-  color: #fff;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  touch-action: manipulation; /* Previne o double-tap zoom no iOS */
+  width: 100%;
+  min-height: 100vh;
+  /* Gradiente sutil no fundo */
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 30%);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  line-height: 1.6;
+  /* Melhor espaçamento entre linhas */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-/* Ajustar para telas pequenas */
-@media (max-width: 768px) {
-  body {
-    font-size: 14px;
-  }
+/* Links globais */
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-/* Impedir seleção de texto */
-.no-select {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+a:hover {
+  color: var(--accent-primary-hover);
+}
+
+/*
+  ================================================
+  3. BARRA DE ROLAGEM
+  ================================================
+*/
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  /* Mais escuro */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 5px;
+  border: 2px solid var(--bg-primary);
+  /* Borda para contraste */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #718096;
+}
+
+/*
+  ================================================
+  4. ESTILOS GLOBAIS DE PRIME VUE
+  ================================================
+*/
+
+/* Botões */
+:root .p-button {
+  transition: all 0.2s ease-in-out;
+  /* Transição mais suave */
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: var(--font-family);
+  border: none;
+  padding: 0.75rem 1.25rem;
+  /* Padding ligeiramente ajustado */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Sombra sutil */
+}
+
+:root .p-button:focus {
+  outline: none;
+  /* Remover outline padrão */
+  box-shadow: 0 0 0 3px var(--accent-primary-glow);
+  /* Foco mais visível */
+}
+
+:root .p-button:hover {
+  transform: translateY(-1px);
+  /* Efeito sutil de elevação */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Botão Primário (Accent) */
+:root .p-button:not(.p-button-secondary):not(.p-button-text):not(.p-button-danger):not(.p-button-warning) {
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+  /* Texto mais escuro para contraste */
+}
+
+:root .p-button:not(.p-button-secondary):not(.p-button-text):not(.p-button-danger):not(.p-button-warning):hover {
+  background: var(--accent-primary-hover);
+}
+
+:root .p-button:not(.p-button-secondary):not(.p-button-text):not(.p-button-danger):not(.p-button-warning):focus {
+  background: var(--accent-primary-focus);
+}
+
+/* Botão Secundário (Outline/Ghost) */
+:root .p-button.p-button-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+  /* Sem sombra para botões secundários */
+}
+
+:root .p-button.p-button-secondary:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+  transform: none;
+  /* Sem elevação */
+  box-shadow: none;
+}
+
+/* Botão de Aviso (Amarelo/Laranja) */
+:root .p-button.p-button-warning {
+  background: var(--status-warning);
+  color: var(--bg-primary);
+}
+
+:root .p-button.p-button-warning:hover {
+  background: #d97706;
+  /* Tom mais escuro */
+}
+
+:root .p-button.p-button-warning:focus {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+/* Botão de Perigo (ex. Finalizar) */
+:root .p-button.p-button-danger.p-button-outlined {
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+  box-shadow: none;
+}
+
+:root .p-button.p-button-danger.p-button-outlined:hover {
+  background: rgba(239, 68, 68, 0.05);
+  /* Fundo sutil no hover */
+  transform: none;
+  box-shadow: none;
+}
+
+/* Botão de Texto (ex. Cancelar) */
+:root .p-button.p-button-text {
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+:root .p-button.p-button-text:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Botão Arredondado (para ícones) */
+:root .p-button.p-button-rounded {
+  padding: 0.75rem;
+  /* Ajustar padding para ícones */
+}
+
+/* Tamanhos de Botão */
+:root .p-button-lg {
+  padding: 1rem 1.75rem;
+  font-size: 1.1rem;
+}
+
+
+/* Inputs */
+:root .p-inputtext,
+:root .p-inputnumber .p-inputtext,
+/* Target específico para InputNumber */
+:root .p-dropdown {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease;
+  padding: 0.75rem 1rem;
+  /* Padding padrão */
+  font-family: var(--font-family);
+  font-size: 1rem;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  /* Sombra interna sutil */
+}
+
+/* Placeholder */
+:root .p-inputtext::placeholder {
+  color: var(--text-placeholder);
+}
+
+/* Foco */
+:root .p-inputtext:enabled:focus,
+:root .p-inputnumber:not(.p-disabled) .p-inputtext:focus,
+:root .p-dropdown:not(.p-disabled).p-focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px var(--accent-primary-glow) !important;
+  /* Foco mais visível */
+}
+
+/* InputNumber botões */
+:root .p-inputnumber-button {
+  background: var(--bg-card) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+:root .p-inputnumber-button:hover {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dropdown */
+:root .p-dropdown .p-dropdown-label {
+  padding: 0;
+  /* Remover padding padrão do label */
+}
+
+:root .p-dropdown .p-dropdown-trigger {
+  color: var(--text-secondary);
+}
+
+:root .p-dropdown-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  /* Borda arredondada */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  /* Sombra */
+}
+
+:root .p-dropdown-item {
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+}
+
+:root .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+  background: var(--bg-secondary);
+}
+
+:root .p-dropdown-item.p-highlight {
+  background: var(--accent-primary) !important;
+  /* Seleção com cor de destaque */
+  color: var(--accent-primary-text) !important;
+}
+
+
+/* DataTable */
+:root .p-datatable {
+  border-radius: 8px;
+  /* Adicionado */
+  overflow: hidden;
+  /* Adicionado */
+  border: 1px solid var(--border-color);
+  /* Borda ao redor da tabela */
+}
+
+:root .p-datatable .p-datatable-thead>tr>th {
+  background: var(--bg-secondary);
+  /* Fundo ligeiramente diferente */
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  /* Menor */
+  text-transform: uppercase;
+  /* Caixa alta */
+  padding: 0.75rem 1rem;
+  /* Padding ajustado */
+}
+
+:root .p-datatable .p-datatable-tbody>tr {
+  background: transparent;
+  color: var(--text-primary);
+  transition: background-color 0.2s ease;
+}
+
+:root .p-datatable .p-datatable-tbody>tr:nth-child(even) {
+  background-color: rgba(32, 36, 44, 0.3);
+  /* Listras sutis */
+}
+
+:root .p-datatable .p-datatable-tbody>tr:hover {
+  background-color: var(--bg-card);
+  /* Hover mais escuro */
+}
+
+:root .p-datatable .p-datatable-tbody>tr>td {
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.85rem 1rem;
+  /* Padding ajustado */
+}
+
+:root .p-datatable .p-datatable-tbody>tr:last-child>td {
+  border-bottom: none;
+}
+
+
+/* Diálogo */
+:root .p-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  /* Sombra mais pronunciada */
+}
+
+:root .p-dialog .p-dialog-header {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.75rem;
+  /* Mais padding */
+  font-size: 1.2rem;
+  /* Título maior */
+}
+
+:root .p-dialog .p-dialog-content {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 1.75rem;
+  /* Mais padding */
+}
+
+:root .p-dialog .p-dialog-footer {
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  padding: 1rem 1.75rem;
+}
+
+/* Toast */
+:root .p-toast .p-toast-message {
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+:root .p-toast .p-toast-message-content {
+  color: var(--text-primary);
+}
+
+:root .p-toast .p-toast-summary {
+  font-weight: 600;
+}
+
+:root .p-toast .p-toast-detail {
+  color: var(--text-secondary);
+}
+
+:root .p-toast .p-toast-message-icon {
+  color: var(--accent-primary);
+  /* Ícone com cor de destaque */
+}
+
+:root .p-toast .p-toast-message.p-toast-message-success .p-toast-message-icon {
+  color: var(--status-success);
+}
+
+:root .p-toast .p-toast-message.p-toast-message-warn .p-toast-message-icon {
+  color: var(--status-warning);
+}
+
+:root .p-toast .p-toast-message.p-toast-message-error .p-toast-message-icon {
+  color: var(--status-danger);
 }

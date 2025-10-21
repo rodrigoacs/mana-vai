@@ -1,15 +1,20 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 
-// Lógica de negócio do Torneio, extraída para ser reutilizável.
 export function useTournament() {
   // --- ESTADO REATIVO ---
-  const playerCount = ref(8)
-  const tableCount = ref(2)
+  // playerCount e tableCount foram removidos daqui
   const roundCount = ref(3)
   const players = ref([])
   const tournamentStarted = ref(false)
   const currentRound = ref(1)
   const rounds = ref([])
+
+  // --- COMPUTED PROPERTIES ---
+  const playerCount = computed(() => players.value.length)
+  const tableCount = computed(() => {
+    if (players.value.length < 4) return 0
+    return Math.ceil(players.value.length / 4)
+  })
 
   // --- FUNÇÕES PRIVADAS (Helpers) ---
   const getAveragePosition = (player) => {
@@ -18,16 +23,8 @@ export function useTournament() {
   }
 
   // --- WATCHER INTERNO ---
-  watch(playerCount, (newValue) => {
-    let correctedValue = newValue
-    if (correctedValue < 4) correctedValue = 4
-    if (correctedValue % 4 !== 0) correctedValue = Math.floor(correctedValue / 4) * 4
-    if (playerCount.value !== correctedValue) playerCount.value = correctedValue
-    const maxTables = Math.floor(playerCount.value / 4)
-    if (tableCount.value > maxTables) tableCount.value = maxTables
-  })
+  // O watcher que forçava múltiplos de 4 foi REMOVIDO.
 
-  // --- COMPUTED PROPERTIES ---
   const sortedPlayers = computed(() => {
     return [...players.value].sort((a, b) => {
       if ((b.points || 0) !== (a.points || 0)) return (b.points || 0) - (a.points || 0)
@@ -59,7 +56,8 @@ export function useTournament() {
 
   // --- FUNÇÕES PÚBLICAS (Ações) ---
   function addPlayer(name) {
-    if (!name.trim() || players.value.length >= playerCount.value) return false
+    if (!name.trim()) return false
+    // Verificação de limite de jogadores foi REMOVIDA
     players.value.push({ id: Date.now() + players.value.length, name: name.trim(), points: 0, matches: [] })
     return true
   }
@@ -78,10 +76,28 @@ export function useTournament() {
         [roundPlayers[i], roundPlayers[j]] = [roundPlayers[j], roundPlayers[i]]
       }
     }
+
     const tables = []
-    const playersPerTable = Math.floor(playerCount.value / tableCount.value)
-    for (let i = 0; i < tableCount.value; i++) {
-      const tablePlayers = roundPlayers.slice(i * playersPerTable, (i + 1) * playersPerTable)
+    const numPlayers = playerCount.value
+    const numTables = tableCount.value
+    if (numTables === 0) return
+
+    // Lógica de distribuição de jogadores
+    // Isso cria mesas de 4 e 3 da forma mais equilibrada possível
+    // Ex: 10 jogadores -> 3 mesas (4, 3, 3)
+    // Ex: 11 jogadores -> 3 mesas (4, 4, 3)
+    // Ex: 13 jogadores -> 4 mesas (4, 3, 3, 3)
+    const basePlayersPerTable = Math.floor(numPlayers / numTables)
+    let extraPlayers = numPlayers % numTables
+    let playerIndex = 0
+
+    for (let i = 0; i < numTables; i++) {
+      const playersForThisTable = basePlayersPerTable + (extraPlayers > 0 ? 1 : 0)
+      extraPlayers--
+
+      const tablePlayers = roundPlayers.slice(playerIndex, playerIndex + playersForThisTable)
+      playerIndex += playersForThisTable
+
       if (tablePlayers.length > 0) {
         tables.push({ number: i + 1, players: tablePlayers.map(p => ({ id: p.id, name: p.name, result: null })), status: 'pending' })
       }
@@ -90,7 +106,9 @@ export function useTournament() {
   }
 
   function startTournament() {
-    if (players.value.length !== playerCount.value) return false
+    // A verificação agora é muito mais simples
+    if (players.value.length < 4) return false
+
     players.value.forEach(p => { p.points = 0; p.matches = [] })
     currentRound.value = 1
     rounds.value = []
@@ -102,6 +120,9 @@ export function useTournament() {
   function saveResults(tableIndex, results) {
     const table = currentTables.value[tableIndex]
     if (!table) return
+
+    // A lógica de pontuação (3, 2, 1) já funciona para mesas de 3 pessoas,
+    // pois a 4ª posição (null) não dá pontos.
     table.players.forEach((player, idx) => {
       const position = results[idx]
       player.result = position
@@ -126,7 +147,6 @@ export function useTournament() {
     return true
   }
 
-  // ADICIONADO: Função para finalizar o torneio
   function endTournament() {
     tournamentStarted.value = false
   }
@@ -139,10 +159,12 @@ export function useTournament() {
   }
 
   return {
-    playerCount, tableCount, roundCount, players, tournamentStarted,
+    // Exporta os novos computeds
+    playerCount, tableCount,
+    roundCount, players, tournamentStarted,
     currentRound, rounds, sortedPlayers, currentTables, allResultsRegistered,
     addPlayer, removePlayer, startTournament, saveResults, nextRound,
-    endTournament, // Exportando a nova função
+    endTournament,
     resetTournament, getAveragePosition,
   }
 }

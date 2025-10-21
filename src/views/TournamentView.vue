@@ -1,255 +1,264 @@
 <template>
-  <div class="tournament-container">
-    <div class="tournament-sidebar">
-      <div class="sidebar-header">
+  <div
+    class="tournament-page"
+    :class="{ 'drawer-open': isDrawerOpen }"
+  >
+
+    <Button
+      icon="pi pi-bars"
+      class="drawer-toggle p-button-rounded p-button-secondary"
+      @click="isDrawerOpen = !isDrawerOpen"
+    />
+
+    <div
+      class="drawer-overlay"
+      @click="isDrawerOpen = false"
+    ></div>
+
+    <aside class="ranking-drawer">
+      <div class="drawer-header">
         <h3>Classificação</h3>
       </div>
+
       <div
         v-if="players.length === 0"
-        class="empty-rankings"
+        class="empty-list"
       >
-        <p>Adicione jogadores para ver a classificação</p>
+        <i class="pi pi-users"></i>
+        <p>Adicione jogadores para ver o ranking</p>
       </div>
+
       <div
         v-else
         class="rankings-list"
       >
-        <div class="ranking-header">
-          <span class="ranking-pos-header">#</span>
-          <span class="ranking-name-header">Nome</span>
-          <span class="ranking-stats-header">Pontos</span>
-          <span class="ranking-tiebreaker-header">Desempate</span>
+        <div class="ranking-item header">
+          <span class="pos">#</span>
+          <span class="name">Jogador</span>
+          <span class="points">Pts</span>
+          <span class="tiebreaks">
+            <i
+              class="pi pi-sort-alt"
+              title="Critérios de Desempate (1º, 2º, 3º)"
+            ></i>
+          </span>
         </div>
+
         <div
           v-for="(player, index) in sortedPlayers"
           :key="player.id"
           class="ranking-item"
         >
-          <div class="ranking-position">{{ index + 1 }}</div>
-          <div class="ranking-name">{{ player.name }}</div>
-          <div class="ranking-points">{{ player.points || 0 }}</div>
+          <div class="pos">{{ index + 1 }}</div>
           <div
-            class="ranking-tiebreakers"
-            :title="`Posição média: ${getAveragePosition(player).toFixed(2)}`"
-          >
-            <span
-              class="tiebreaker-item"
-              title="1º lugares"
-            >
-              <span class="tiebreaker-position gold">1º:</span>{{(player.matches || []).filter(m => m.position ===
-                1).length}}
+            class="name"
+            :title="player.name"
+          >{{ player.name }}</div>
+          <div class="points">{{ player.points || 0 }}</div>
+          <div class="tiebreaks">
+            <span :title="`1º Lugares: ${(player.matches || []).filter(m => m.position === 1).length}`">
+              <i class="pi pi-star-fill gold"></i>
+              {{(player.matches || []).filter(m => m.position === 1).length}}
             </span>
-            <span
-              class="tiebreaker-item"
-              title="2º lugares"
-            >
-              <span class="tiebreaker-position silver">2º:</span>{{(player.matches || []).filter(m => m.position ===
-                2).length}}
+            <span :title="`2º Lugares: ${(player.matches || []).filter(m => m.position === 2).length}`">
+              <i class="pi pi-star-fill silver"></i>
+              {{(player.matches || []).filter(m => m.position === 2).length}}
             </span>
-            <span
-              class="tiebreaker-item"
-              title="3º lugares"
-            >
-              <span class="tiebreaker-position bronze">3º:</span>{{(player.matches || []).filter(m => m.position ===
-                3).length}}
+            <span :title="`3º Lugares: ${(player.matches || []).filter(m => m.position === 3).length}`">
+              <i class="pi pi-star-fill bronze"></i>
+              {{(player.matches || []).filter(m => m.position === 3).length}}
             </span>
           </div>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <div class="tournament-content">
-      <h1>Gerenciador de Torneios</h1>
+    <main class="main-content">
 
       <div
         v-if="!tournamentStarted"
-        class="tournament-setup"
+        class="setup-container"
       >
-        <h2>Configuração do Torneio</h2>
-
-        <div class="setup-form">
-          <div class="form-group">
-            <label for="playerCount">Número de Jogadores</label>
-            <InputNumber
-              id="playerCount"
-              v-model="playerCount"
-              :min="4"
-              :step="4"
-              showButtons
-            />
-            <small>Deve ser múltiplo de 4</small>
-          </div>
-
-          <div class="form-group">
-            <label for="tableCount">Número de Mesas</label>
-            <InputNumber
-              id="tableCount"
-              v-model="tableCount"
-              :min="1"
-              showButtons
-              :max="Math.floor(playerCount / 4)"
-            />
-            <small>Baseado no número de jogadores ({{ playerCount }} jogadores / 4 = {{ Math.floor(playerCount / 4) }}
-              mesas)</small>
-          </div>
-
-          <div class="form-group">
-            <label for="roundCount">Número de Rodadas</label>
-            <InputNumber
-              id="roundCount"
-              v-model="roundCount"
-              :min="1"
-              :max="5"
-              showButtons
-            />
-          </div>
+        <div class="setup-header">
+          <h1>Gerenciador de Torneios</h1>
+          <p>Configure os jogadores e as rodadas para começar.</p>
         </div>
 
-        <div class="player-setup">
-          <h3>Jogadores</h3>
-          <div class="player-form">
-            <div class="form-group player-input">
-              <InputText
-                v-model="newPlayerName"
-                placeholder="Nome do jogador"
-                @keydown.enter="handleAddPlayer"
-              />
-              <Button
-                label="Adicionar"
-                icon="pi pi-plus"
-                @click="handleAddPlayer"
-                :disabled="!newPlayerName"
-              />
-            </div>
-
-            <div class="random-generator">
-              <Button
-                label="Gerar Jogadores Aleatórios"
-                icon="pi pi-users"
-                @click="generateRandomPlayers"
-                class="p-button-secondary"
-              />
-              <small>Adiciona jogadores aleatórios para testes (até o limite configurado)</small>
-            </div>
+        <div class="card setup-card">
+          <div class="card-header">
+            <h2>Configuração do Torneio</h2>
           </div>
+          <div class="card-content">
 
-          <div
-            v-if="players.length > 0"
-            class="player-list"
-          >
-            <DataTable
-              :value="players"
-              responsiveLayout="scroll"
-            >
-              <Column
-                field="name"
-                header="Nome"
-              ></Column>
-              <Column
-                header="Ações"
-                style="width: 100px"
-              >
-                <template #body="slotProps">
-                  <Button
-                    icon="pi pi-trash"
-                    @click="removePlayer(slotProps.index)"
-                    class="p-button-rounded p-button-text p-button-danger"
+            <div class="setup-controls">
+              <div class="form-group rounds-group">
+                <label for="roundCount">Nº de Rodadas</label>
+                <InputNumber
+                  id="roundCount"
+                  v-model="roundCount"
+                  :min="1"
+                  :max="5"
+                  showButtons
+                />
+              </div>
+              <div class="form-group add-player-group">
+                <label>Adicionar Jogador</label>
+                <div class="p-inputgroup">
+                  <InputText
+                    v-model="newPlayerName"
+                    placeholder="Nome do jogador"
+                    @keydown.enter="handleAddPlayer"
                   />
-                </template>
-              </Column>
-            </DataTable>
-          </div>
-          <div
-            v-else
-            class="empty-players"
-          >
-            <p>Nenhum jogador adicionado</p>
-          </div>
+                  <Button
+                    label="Adicionar"
+                    icon="pi pi-plus"
+                    @click="handleAddPlayer"
+                    :disabled="!newPlayerName"
+                  />
+                </div>
+              </div>
+              <!-- <div class="form-group generate-group">
+                <label>Gerar Aleatórios</label>
+                <div class="p-inputgroup">
+                  <InputNumber
+                    v-model="randomPlayerCount"
+                    :min="4"
+                    :max="32"
+                    placeholder="Qtde."
+                  />
+                  <Button
+                    label="Gerar"
+                    icon="pi pi-users"
+                    @click="generateRandomPlayers"
+                    class="p-button-secondary"
+                  />
+                </div>
+              </div> -->
+            </div>
 
-          <div class="start-tournament">
-            <Button
-              label="Iniciar Torneio"
-              icon="pi pi-play"
-              @click="handleStartTournament"
-              :disabled="players.length < 4 || players.length % 4 !== 0 || players.length !== playerCount"
-            />
-            <small v-if="players.length !== playerCount">
-              Adicione {{ playerCount - players.length }} jogadores para iniciar o torneio
-            </small>
+            <hr class="setup-divider" />
+
+            <h3>Jogadores ({{ players.length }})</h3>
+            <div
+              v-if="players.length > 0"
+              class="player-list-container"
+            >
+              <DataTable
+                :value="players"
+                size="small"
+              >
+                <Column
+                  field="name"
+                  header="Nome"
+                ></Column>
+                <Column
+                  header="Ações"
+                  style="width: 100px; text-align: right;"
+                >
+                  <template #body="slotProps">
+                    <Button
+                      icon="pi pi-trash"
+                      @click="removePlayer(slotProps.index)"
+                      class="p-button-rounded p-button-text p-button-danger action-button"
+                      title="Remover Jogador"
+                    >X</Button>
+                  </template>
+                </Column>
+              </DataTable>
+            </div>
+            <div
+              v-else
+              class="empty-list small"
+            >
+              <p>Nenhum jogador adicionado</p>
+            </div>
+
+            <div class="start-tournament">
+              <Button
+                :label="`Iniciar Torneio com ${players.length} Jogadores`"
+                icon="pi pi-play"
+                @click="handleStartTournament"
+                :disabled="players.length < 4"
+                class="p-button-lg start-button"
+              />
+              <small v-if="players.length < 4">
+                (Mínimo de 4 jogadores)
+              </small>
+            </div>
           </div>
         </div>
       </div>
 
       <div
         v-else
-        class="tournament-active"
+        class="active-container"
       >
-        <div class="tournament-header">
-          <h2>Torneio em Andamento</h2>
-          <div class="tournament-info">
-            <span>Rodada {{ currentRound }} de {{ roundCount }}</span>
-            <span>{{ playerCount }} Jogadores</span>
-            <span>{{ tableCount }} Mesas</span>
+        <div class="active-header">
+          <h1>Rodada {{ currentRound }} <span class="round-total">/ {{ roundCount }}</span></h1>
+          <div class="tournament-stats">
+            <span title="Jogadores"><i class="pi pi-users"></i> {{ players.length }}</span>
+            <span title="Mesas"><i class="pi pi-table"></i> {{ tableCount }}</span>
           </div>
         </div>
 
-        <div class="rounds-section">
-          <div class="round-header">
-            <h3>Rodada {{ currentRound }}</h3>
-            <div class="round-actions">
-              <Button
-                label="Resultados Aleatórios"
-                icon="pi pi-bolt"
-                @click="generateRandomResults"
-                class="p-button-warning"
-                v-if="!allResultsRegistered && currentTables.length > 0"
-                tooltip="Gera resultados aleatórios para todas as mesas pendentes"
-                tooltipPosition="left"
-              />
-              <Button
-                label="Próxima Rodada"
-                icon="pi pi-arrow-right"
-                @click="handleNextRound"
-                :disabled="currentRound >= roundCount || !allResultsRegistered"
-              />
-            </div>
-          </div>
+        <div class="round-actions">
+          <Button
+            label="Resultados Aleatórios"
+            icon="pi pi-bolt"
+            @click="generateRandomResults"
+            class="p-button-warning"
+            v-if="!allResultsRegistered && currentTables.length > 0"
+          />
+          <Button
+            label="Próxima Rodada"
+            icon="pi pi-arrow-right"
+            @click="handleNextRound"
+            :disabled="currentRound >= roundCount || !allResultsRegistered"
+            class="next-round-button"
+          />
+        </div>
 
-          <div class="tables-container">
-            <div
-              v-for="(table, tableIndex) in currentTables"
-              :key="tableIndex"
-              class="table-card"
-            >
-              <div class="table-header">
-                <h4>Mesa {{ tableIndex + 1 }}</h4>
-                <span
-                  class="table-status"
-                  :class="table.status"
-                >
-                  {{ table.status === 'completed' ? 'Concluída' : 'Pendente' }}
-                </span>
-              </div>
-              <div class="table-players">
-                <div
-                  v-for="(player, playerIndex) in table.players"
-                  :key="playerIndex"
-                  class="table-player"
-                  :class="{ 'winner': player.result === 1 }"
-                >
-                  <span>{{ player.name }}</span>
-                </div>
-              </div>
+        <div class="tables-grid">
+          <div
+            v-for="(table, tableIndex) in currentTables"
+            :key="tableIndex"
+            class="table-card"
+            :class="table.status"
+          >
+            <div class="table-card-header">
+              <h4>Mesa {{ tableIndex + 1 }}</h4>
+              <span class="table-status">
+                <i :class="table.status === 'completed' ? 'pi pi-check-circle' : 'pi pi-clock'"></i>
+                {{ table.status === 'completed' ? 'Concluída' : 'Pendente' }}
+              </span>
+            </div>
+
+            <div class="table-card-players">
               <div
-                v-if="table.status !== 'completed'"
-                class="table-actions"
+                v-for="(player) in table.players"
+                :key="player.id"
+                class="player-chip"
+                :class="{ 'winner': player.result === 1 }"
               >
-                <Button
-                  label="Registrar Resultado"
-                  icon="pi pi-check"
-                  @click="openResultDialog(tableIndex)"
-                />
+                <i class="pi pi-user"></i>
+                <span :title="player.name">{{ player.name }}</span>
+                <span
+                  v-if="player.result"
+                  class="player-pos"
+                >{{ player.result }}º</span>
               </div>
+            </div>
+
+            <div
+              v-if="table.status !== 'completed'"
+              class="table-card-actions"
+            >
+              <Button
+                label="Registrar Resultado"
+                icon="pi pi-check"
+                @click="openResultDialog(tableIndex)"
+                class="register-result-button"
+              />
             </div>
           </div>
         </div>
@@ -259,7 +268,7 @@
             label="Finalizar Torneio"
             icon="pi pi-stop-circle"
             @click="handleEndTournament"
-            class="p-button-danger"
+            class="p-button-danger p-button-outlined"
           />
           <Button
             label="Reiniciar"
@@ -269,42 +278,51 @@
           />
         </div>
       </div>
-    </div>
+    </main>
 
     <Dialog
       v-model:visible="showResultDialog"
       header="Registrar Resultados"
       modal
-      :style="{ width: '400px' }"
+      class="results-dialog"
+      :style="{ width: '450px' }"
+      :draggable="false"
     >
       <div
         class="p-fluid"
-        v-if="selectedTable !== null"
+        v-if="selectedTable !== null && currentTables[selectedTable]"
       >
         <div class="results-info">
           <strong>Mesa {{ selectedTable + 1 }}</strong>
-          <p>Selecione a ordem dos jogadores (1º ao 4º lugar)</p>
+          <p>Selecione a ordem dos jogadores (1º ao {{ currentTables[selectedTable].players.length }}º lugar)</p>
         </div>
         <div
-          v-for="(player, index) in currentTables[selectedTable]?.players"
+          v-for="(player, index) in currentTables[selectedTable].players"
           :key="index"
           class="field"
         >
           <div class="p-inputgroup">
-            <span class="p-inputgroup-addon">{{ player.name }}</span>
+            <span class="p-inputgroup-addon"><i class="pi pi-user"></i></span>
+            <span class="p-inputgroup-addon player-name">{{ player.name }}</span>
             <Dropdown
               v-model="playerResults[index]"
-              :options="[1, 2, 3, 4]"
+              :options="Array.from({ length: currentTables[selectedTable].players.length }, (_, i) => i + 1)"
               placeholder="Posição"
-              optionLabel=""
             />
           </div>
+        </div>
+
+        <div
+          v-if="resultsError"
+          class="results-error-message"
+        >
+          <i class="pi pi-exclamation-triangle"></i>
+          {{ resultsError }}
         </div>
       </div>
       <template #footer>
         <Button
           label="Cancelar"
-          icon="pi pi-times"
           @click="showResultDialog = false"
           class="p-button-text"
         />
@@ -316,6 +334,7 @@
         />
       </template>
     </Dialog>
+
   </div>
 </template>
 
@@ -324,46 +343,54 @@ import { ref, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useTournament } from '../composables/useTournament'
 
-const toast = useToast()
+// --- Refs de UI ---
+const isDrawerOpen = ref(false)
 
+// --- Lógica do Torneio ---
+const toast = useToast()
 const {
-  playerCount,
-  tableCount,
-  roundCount,
-  players,
-  tournamentStarted,
-  currentRound,
-  sortedPlayers,
-  currentTables,
-  allResultsRegistered,
-  addPlayer,
-  removePlayer,
-  startTournament,
-  saveResults,
-  nextRound,
-  endTournament,
-  resetTournament,
-  getAveragePosition,
+  playerCount, tableCount, roundCount, players, tournamentStarted,
+  currentRound, sortedPlayers, currentTables, allResultsRegistered,
+  addPlayer, removePlayer, startTournament, saveResults, nextRound,
+  endTournament, resetTournament, getAveragePosition,
 } = useTournament()
 
+// --- Refs de Formulário ---
 const newPlayerName = ref('')
+const randomPlayerCount = ref(8)
 const showResultDialog = ref(false)
 const selectedTable = ref(null)
 const playerResults = ref([])
 
+// --- Nomes Aleatórios ---
 const firstNames = ['João', 'Maria', 'Pedro', 'Ana', 'Carlos', 'Lucia', 'Bruno', 'Camila', 'Rafael', 'Juliana', 'Fernando', 'Amanda', 'Lucas', 'Larissa', 'Ricardo', 'Renata', 'Paulo', 'Gabriela', 'Marcos', 'Isabel', 'André', 'Patrícia']
 const lastNames = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Costa', 'Pereira', 'Carvalho', 'Almeida', 'Ferreira', 'Ribeiro', 'Rodrigues', 'Gomes', 'Martins', 'Araújo', 'Barbosa', 'Cardoso', 'Teixeira', 'Moreira', 'Lima', 'Campos']
 
-const isValidResults = computed(() => {
-  const positions = playerResults.value.filter(pos => pos !== null)
-  return positions.length === 4 && new Set(positions).size === 4 && positions.every(pos => pos >= 1 && pos <= 4)
+// --- Validação do Diálogo ---
+const resultsError = computed(() => {
+  if (selectedTable.value === null) return 'Nenhuma mesa selecionada.'
+  const table = currentTables.value[selectedTable.value]
+  if (!table) return 'Erro ao carregar mesa.'
+  const numPlayersOnTable = table.players.length
+  const positions = playerResults.value.slice(0, numPlayersOnTable)
+  if (positions.some(pos => pos === null || pos === undefined)) {
+    return 'Todas as posições devem ser preenchidas.'
+  }
+  const expectedPositions = Array.from({ length: numPlayersOnTable }, (_, i) => i + 1)
+  const sortedPositions = [...positions].sort((a, b) => a - b)
+  if (JSON.stringify(sortedPositions) !== JSON.stringify(expectedPositions)) {
+    return `As posições devem ser únicas (1 a ${numPlayersOnTable}).`
+  }
+  return null
 })
+const isValidResults = computed(() => resultsError.value === null)
 
+// --- Funções Handler ---
 function handleAddPlayer() {
   if (addPlayer(newPlayerName.value)) {
     newPlayerName.value = ''
   } else {
-    toast.add({ severity: 'warn', summary: 'Limite atingido', detail: `Máximo de ${playerCount.value} jogadores permitido.`, life: 3000 })
+    toast.add({ severity: 'warn', summary: 'Nome Inválido', detail: 'O nome do jogador não pode estar vazio.', life: 3000 })
   }
 }
 
@@ -371,7 +398,7 @@ function handleStartTournament() {
   if (startTournament()) {
     toast.add({ severity: 'success', summary: 'Torneio iniciado!', detail: 'Primeira rodada gerada com sucesso.', life: 3000 })
   } else {
-    toast.add({ severity: 'error', summary: 'Erro', detail: `Precisamos de exatamente ${playerCount.value} jogadores.`, life: 3000 })
+    toast.add({ severity: 'error', summary: 'Erro', detail: 'É necessário ter pelo menos 4 jogadores.', life: 3000 })
   }
 }
 
@@ -389,10 +416,12 @@ function handleNextRound() {
 
 function handleSaveResults() {
   if (!isValidResults.value) {
-    toast.add({ severity: 'error', summary: 'Resultados Inválidos', detail: 'As posições devem ser únicas e entre 1 e 4.', life: 3000 })
+    toast.add({ severity: 'error', summary: 'Resultados Inválidos', detail: resultsError.value, life: 3000 })
     return
   }
-  saveResults(selectedTable.value, playerResults.value)
+  const numPlayersOnTable = currentTables.value[selectedTable.value].players.length
+  const finalResults = playerResults.value.slice(0, numPlayersOnTable)
+  saveResults(selectedTable.value, finalResults)
   showResultDialog.value = false
   toast.add({ severity: 'success', summary: 'Resultado Registrado', detail: `Resultados da mesa ${selectedTable.value + 1} salvos.`, life: 3000 })
 }
@@ -412,20 +441,18 @@ function openResultDialog(tableIndex) {
 }
 
 function generateRandomPlayers() {
-  const playersNeeded = playerCount.value - players.value.length
-  if (playersNeeded <= 0) {
-    toast.add({ severity: 'info', summary: 'Limite Atingido', detail: 'O número de jogadores já foi alcançado.', life: 3000 })
-    return
-  }
-  for (let i = 0; i < playersNeeded; i++) {
+  const count = randomPlayerCount.value
+  if (count <= 0) return
+  players.value = []
+  let addedCount = 0
+  while (addedCount < count) {
     const name = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`
     if (!players.value.some(p => p.name === name)) {
       addPlayer(name)
-    } else {
-      i--
+      addedCount++
     }
   }
-  toast.add({ severity: 'success', summary: 'Jogadores Gerados', detail: `${playersNeeded} jogadores aleatórios foram adicionados.`, life: 3000 })
+  toast.add({ severity: 'success', summary: 'Jogadores Gerados', detail: `${addedCount} jogadores aleatórios foram adicionados.`, life: 3000 })
 }
 
 function generateRandomResults() {
@@ -433,10 +460,10 @@ function generateRandomResults() {
   currentTables.value.forEach((table, tableIndex) => {
     if (table.status === 'completed') return
     pendingTablesCount++
-    const positions = [1, 2, 3, 4].sort(() => Math.random() - 0.5)
+    const numPlayersOnTable = table.players.length
+    const positions = Array.from({ length: numPlayersOnTable }, (_, i) => i + 1).sort(() => Math.random() - 0.5)
     saveResults(tableIndex, positions)
   })
-
   if (pendingTablesCount > 0) {
     toast.add({ severity: 'success', summary: 'Resultados Gerados', detail: `Resultados aleatórios para ${pendingTablesCount} mesas foram registrados.`, life: 3000 })
   } else {
@@ -446,583 +473,969 @@ function generateRandomResults() {
 </script>
 
 <style scoped>
-:root {
-  --purple-primary: #9c27b0;
-  --purple-light: rgba(156, 39, 176, 0.2);
-  --purple-glow: rgba(156, 39, 176, 0.5);
-  --gold-accent: #ffd700;
-  --silver-accent: #c0c0c0;
-  --bronze-accent: #cd7f32;
-  --surface-ground: #121212;
-  --surface-card: rgba(28, 28, 32, 0.85);
-  --surface-sidebar: rgba(22, 22, 25, 0.9);
-  --surface-highlight: rgba(40, 40, 45, 0.9);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --text-color: #f0f0f0;
-  --text-muted: rgba(255, 255, 255, 0.6);
-  --status-completed-bg: rgba(76, 175, 80, 0.2);
-  --status-completed-text: #81c784;
-  --status-pending-bg: rgba(255, 152, 0, 0.2);
-  --status-pending-text: #ffb74d;
-}
-
-.tournament-container {
+/* * 1. LAYOUT PRINCIPAL (DRAWER + CONTENT)
+ */
+.tournament-page {
   display: flex;
-  height: calc(100vh - 60px);
   width: 100%;
-  color: var(--text-color);
-  background: radial-gradient(ellipse at top, #282030, var(--surface-ground));
-  font-family: 'Poppins', sans-serif;
+  height: 100vh;
+  background-color: var(--bg-primary);
+  /* Fundo base */
 }
 
-/* 2. Conteúdo Principal e Painéis */
-.tournament-content {
-  flex: 1;
-  padding: 1.5rem 2.5rem;
-  overflow-y: auto;
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  /* Aumentado para mais impacto */
-  font-size: 2.2rem;
-  /* Aumentado */
-  color: var(--purple-primary);
-  text-shadow: 0 0 10px var(--purple-glow);
-}
-
-h2 {
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.75rem;
-  /* Aumentado */
-  font-weight: 600;
-  font-size: 1.8rem;
-  /* Aumentado */
-}
-
-.tournament-setup,
-.tournament-active {
-  background-color: var(--surface-card);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  /* Aumentado */
-  padding: 2.5rem;
-  /* Aumentado */
-  margin-bottom: 2.5rem;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* 3. Sidebar e Ranking */
-.tournament-sidebar {
-  width: 480px;
-  background-color: var(--surface-sidebar);
-  backdrop-filter: blur(10px);
-  border-right: 1px solid var(--border-color);
-  padding: 1.5rem;
+.ranking-drawer {
+  width: 380px;
+  flex-shrink: 0;
+  background-color: var(--bg-secondary);
+  height: 100vh;
+  position: sticky;
+  top: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  transition: width 0.3s ease;
+  border-right: 1px solid var(--border-color);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Transição suave */
+  z-index: 10;
+  /* Para ficar acima do conteúdo no mobile */
 }
 
-.sidebar-header {
-  margin-bottom: 1rem;
-  text-align: center;
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 3rem 4rem;
+  /* Mais padding */
+  height: 100vh;
+}
+
+/* * 2. HEADER E CONTEÚDO DO DRAWER (RANKING)
+ */
+.drawer-header {
+  padding: 1.5rem;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
+  flex-shrink: 0;
+  background-color: var(--bg-card);
+  /* Fundo sutilmente diferente */
 }
 
-.sidebar-header h3 {
+.drawer-header h3 {
+  font-size: 1.5rem;
   font-weight: 600;
-  letter-spacing: 1px;
-  font-size: 1.4rem;
-  /* Aumentado */
-}
-
-
-
-.empty-rankings,
-.empty-players {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100px;
-  color: var(--text-muted);
+  color: var(--text-primary);
   text-align: center;
 }
+
+.empty-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  height: 100%;
+  flex: 1;
+  /* Ocupa espaço vertical */
+}
+
+.empty-list i {
+  font-size: 3rem;
+  /* Maior */
+  margin-bottom: 1.5rem;
+  color: var(--border-color);
+  /* Cor mais sutil */
+}
+
+.empty-list p {
+  font-size: 1rem;
+}
+
+.empty-list.small {
+  height: auto;
+  padding: 1.5rem;
+  background-color: var(--bg-card);
+  /* Fundo diferente */
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  /* Mais espaço */
+  border: 1px dashed var(--border-color);
+  /* Borda tracejada */
+}
+
+.empty-list.small p {
+  font-size: 0.9rem;
+}
+
 
 .rankings-list {
   flex: 1;
   overflow-y: auto;
-  padding-right: 5px;
-}
-
-.rankings-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.rankings-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.rankings-list::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 3px;
-}
-
-.rankings-list::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-.ranking-header {
-  display: flex;
   padding: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  font-weight: 600;
-  align-items: center;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  position: sticky;
-  /* Mantém o cabeçalho visível */
-  top: 0;
-  background-color: var(--surface-sidebar);
-  /* Garante que não fique transparente */
-  z-index: 10;
 }
-
-.ranking-pos-header {
-  width: 40px;
-  text-align: center;
-}
-
-/* Aumentado */
-.ranking-name-header {
-  flex: 1;
-  padding-left: 1rem;
-}
-
-.ranking-stats-header {
-  width: 70px;
-  text-align: center;
-}
-
-/* Aumentado */
-.ranking-tiebreaker-header {
-  width: 110px;
-  text-align: center;
-}
-
-/* Aumentado */
 
 .ranking-item {
   display: flex;
-  padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid var(--border-color);
   align-items: center;
-  transition: background-color 0.2s ease;
+  padding: 1rem 1rem;
+  /* Padding ligeiramente maior */
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.15s ease-out;
 }
 
 .ranking-item:hover {
-  background-color: var(--surface-highlight);
+  background-color: var(--bg-card);
 }
 
-.ranking-position {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  background-color: var(--purple-light);
-  border: 1px solid var(--purple-glow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ranking-item:last-child {
+  border-bottom: none;
+  /* Remover borda do último item */
+}
+
+.ranking-item.header {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  /* Espaçamento entre letras */
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  z-index: 10;
+  border-bottom: 2px solid var(--border-color);
+  /* Borda mais grossa no header */
+}
+
+.ranking-item .pos {
   font-weight: 700;
+  /* Mais negrito */
   font-size: 1.1rem;
+  color: var(--text-primary);
+  width: 45px;
+  /* Ligeiramente maior */
+  text-align: center;
   flex-shrink: 0;
-  /* Impede que encolha */
 }
 
-.ranking-name {
+.ranking-item.header .pos {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ranking-item .name {
   flex: 1;
-  padding: 0 1rem;
   font-weight: 500;
+  padding: 0 1rem;
+  /* Mais padding horizontal */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.ranking-points {
-  width: 70px;
-  /* Aumentado */
+.ranking-item .points {
+  font-size: 1.25rem;
   font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--purple-primary);
-  text-align: center;
+  color: var(--accent-primary);
+  width: 60px;
+  /* Ligeiramente maior */
+  text-align: right;
+  flex-shrink: 0;
 }
 
-.ranking-tiebreakers {
-  display: flex;
-  gap: 8px;
-  /* Aumentado */
+.ranking-item.header .points {
   font-size: 0.8rem;
-  min-width: 110px;
-  /* Aumentado */
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.ranking-item .tiebreaks {
+  display: flex;
+  gap: 0.6rem;
+  /* Ligeiramente maior */
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 125px;
+  /* Ligeiramente maior */
+  justify-content: flex-end;
+  flex-shrink: 0;
+  align-items: center;
+  /* Alinha ícones e números */
+}
+
+.ranking-item .tiebreaks span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 30px;
+  /* Largura mínima para alinhamento */
   justify-content: flex-end;
 }
 
-.tiebreaker-item {
-  display: flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 3px 6px;
-  border-radius: 4px;
+.ranking-item .tiebreaks i {
+  font-size: 0.85rem;
+  /* Ícones ligeiramente maiores */
 }
 
-.tiebreaker-position {
-  margin-right: 4px;
-  font-weight: bold;
+.ranking-item .tiebreaks .gold {
+  color: #f59e0b;
 }
 
-.gold {
-  color: var(--gold-accent);
+.ranking-item .tiebreaks .silver {
+  color: #a0aec0;
 }
 
-.silver {
-  color: var(--silver-accent);
+/* Cinza mais claro */
+.ranking-item .tiebreaks .bronze {
+  color: #cd7f32;
 }
 
-.bronze {
-  color: var(--bronze-accent);
+.ranking-item.header .tiebreaks {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  justify-content: center;
+}
+
+.ranking-item.header .tiebreaks i {
+  cursor: help;
+  /* Indica que tem tooltip */
 }
 
 
-/* 4. Formulários e Entradas */
-.setup-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
+/* * 3. CONTEÚDO PRINCIPAL - SETUP
+ */
+.setup-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.setup-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  /* Mais espaço */
+}
+
+.setup-header h1 {
+  font-size: 2.8rem;
+  /* Maior */
+  font-weight: 700;
+  color: var(--text-primary);
+  /* Gradiente sutil no texto */
+  background: linear-gradient(45deg, var(--accent-primary), #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.setup-header p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  /* Limita largura do subtítulo */
+  margin: 0 auto;
+}
+
+/* Card unificado */
+.setup-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  /* Mais arredondado */
   margin-bottom: 2rem;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  /* Sombra sutil */
+}
+
+.card-header {
+  padding: 1.25rem 1.75rem;
+  /* Mais padding */
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  /* Fundo ligeiramente diferente */
+}
+
+.card-header h2 {
+  font-size: 1.35rem;
+  /* Maior */
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-content {
+  padding: 1.75rem;
+  /* Mais padding */
+}
+
+/* Nova seção de controles */
+.setup-controls {
+  display: flex;
+  gap: 1.75rem;
+  /* Mais gap */
+  align-items: center;
+  margin-bottom: 2.5rem;
+  /* Mais espaço */
+  padding-bottom: 2rem;
+  /* Espaço antes do divisor */
+  border-bottom: 1px dashed var(--border-color);
+  /* Divisor pontilhado */
 }
 
 .form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.form-group small {
-  display: block;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
-}
-
-.player-form {
-  margin-bottom: 1rem;
-}
-
-.player-input {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.player-list {
-  margin-bottom: 1.5rem;
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
 }
 
-.random-generator {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px dashed var(--border-color);
+/* Input group com espaçamento melhor */
+.p-inputgroup {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.random-generator small {
-  margin-top: 0.5rem;
-  color: var(--text-muted);
-  text-align: center;
+.p-inputgroup .p-button {
+  border-radius: 0 8px 8px 0 !important;
+  /* Arredondar só o canto certo */
 }
 
-:deep(.p-inputtext),
-:deep(.p-inputnumber-input) {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border: 1px solid var(--border-color) !important;
-  color: var(--text-color) !important;
-  border-radius: 6px !important;
+.p-inputgroup .p-inputtext,
+.p-inputgroup .p-inputnumber {
+  border-radius: 8px 0 0 8px !important;
 }
 
-:deep(.p-inputtext:focus) {
-  border-color: var(--purple-primary) !important;
-  box-shadow: 0 0 0 1px var(--purple-primary) !important;
+.add-player-group {
+  flex-grow: 1;
 }
 
-/* 5. Botões e Ações */
+.generate-group {
+  width: 220px;
+  /* Pouco maior */
+}
+
+.generate-group .p-inputnumber {
+  width: 90px;
+}
+
+.setup-controls .p-inputgroup .p-inputtext,
+.setup-controls .p-inputgroup .p-inputnumber {
+  width: 100%;
+}
+
+.setup-controls .p-inputgroup .p-button {
+  flex-shrink: 0;
+}
+
+/* Remover divisor <hr> */
+.setup-divider {
+  display: none;
+}
+
+/* Lista de Jogadores e Ação */
+.setup-card h3 {
+  font-size: 1.2rem;
+  /* Pouco maior */
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  /* Mais espaço */
+  color: var(--text-primary);
+  /* Mais destaque */
+}
+
+.player-list-container {
+  max-height: 450px;
+  /* Pouco maior */
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 2.5rem;
+}
+
+/* Estilo para botão de remover */
+.action-button:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
 .start-tournament {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 2rem;
+  /* Mais espaço */
+}
+
+.start-button {
+  padding: 1rem 2.5rem;
+  /* Botão maior */
+  font-size: 1.15rem;
 }
 
 .start-tournament small {
-  margin-top: 0.5rem;
-  color: var(--text-muted);
-}
-
-.start-tournament .p-button,
-.round-actions .p-button-warning,
-.round-actions .p-button:not(:disabled) {
-  transition: all 0.3s ease;
-  box-shadow: 0 0 10px transparent;
-}
-
-.start-tournament .p-button:hover,
-.round-actions .p-button:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px var(--purple-glow);
-}
-
-.tournament-actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-/* 6. Seção de Torneio Ativo */
-.tournament-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  /* Permite quebrar linha em telas menores */
-  gap: 1rem;
-}
-
-.tournament-info {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.tournament-info span {
-  background-color: var(--purple-light);
-  padding: 0.5rem 1rem;
-  /* Aumentado */
-  border-radius: 1rem;
+  margin-top: 1rem;
+  /* Mais espaço */
   font-size: 0.9rem;
-  border: 1px solid var(--purple-glow);
-  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-.round-header {
+/* * 4. CONTEÚDO PRINCIPAL - ATIVO
+ */
+.active-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: baseline;
+  /* Alinha pela base do texto */
   flex-wrap: wrap;
   gap: 1rem;
+  margin-bottom: 2rem;
+  /* Mais espaço */
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.active-header h1 {
+  font-size: 2.8rem;
+  /* Maior */
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.active-header h1 .round-total {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 1.5rem;
+  /* Menor */
+}
+
+.tournament-stats {
+  display: flex;
+  gap: 1.75rem;
+  /* Mais gap */
+  background-color: var(--bg-secondary);
+  padding: 0.85rem 1.5rem;
+  /* Mais padding */
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.tournament-stats span {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  /* Mais gap */
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tournament-stats span i {
+  color: var(--accent-primary);
+  font-size: 1.1rem;
+  /* Ícone maior */
 }
 
 .round-actions {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  /* Mais gap */
+  margin-bottom: 2.5rem;
+  /* Removido padding-bottom e border-bottom */
 }
 
-.tables-container {
+/* Efeito especial no botão de próxima rodada */
+.next-round-button:not(:disabled) {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-primary-glow);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(6, 182, 212, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0);
+  }
+}
+
+
+.tables-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  /* Minmax maior */
+  gap: 2rem;
+  /* Mais gap */
 }
 
 .table-card {
-  background-color: var(--surface-highlight);
-  border-radius: 12px;
-  /* Aumentado */
-  padding: 1.5rem;
-  /* Aumentado */
-  border: 1px solid transparent;
-  transition: all 0.3s ease;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  /* Mais arredondado */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.25s ease-out;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 .table-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--purple-glow);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  /* Elevação maior */
+  border-color: var(--accent-primary);
+  box-shadow: 0 8px 25px var(--accent-primary-glow);
+  /* Sombra colorida mais forte */
 }
 
-.table-header {
+.table-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  padding: 1.25rem 1.5rem;
+  /* Mais padding */
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5rem;
+  background-color: var(--bg-card);
+  /* Header diferente */
 }
 
-.table-header h4 {
-  margin: 0;
+.table-card-header h4 {
   font-size: 1.2rem;
+  /* Maior */
+  font-weight: 600;
 }
 
 .table-status {
-  font-size: 0.8rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.table-status.completed {
-  background-color: var(--status-completed-bg);
-  color: var(--status-completed-text);
-}
-
-.table-status.pending {
-  background-color: var(--status-pending-bg);
-  color: var(--status-pending-text);
-}
-
-.table-players {
-  margin-bottom: 1rem;
-}
-
-.table-player {
-  padding: 0.75rem;
-  /* Aumentado */
-  margin-bottom: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  /* Maior */
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  /* Padding */
   border-radius: 6px;
-  transition: background-color 0.2s ease;
+  /* Borda arredondada */
 }
 
-.table-player:hover {
-  background-color: rgba(0, 0, 0, 0.4);
+.table-card.completed .table-status {
+  color: var(--status-success);
+  background-color: rgba(34, 197, 94, 0.1);
 }
 
-.table-player.winner {
-  background-color: rgba(255, 215, 0, 0.1);
-  border-left: 3px solid var(--gold-accent);
+.table-card.pending .table-status {
+  color: var(--status-warning);
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.table-card-players {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  /* Mais gap */
+  padding: 1.5rem;
+  /* Mais padding */
+  flex: 1;
+}
+
+.player-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  /* Mais gap */
+  background: var(--bg-card);
+  padding: 0.85rem 1rem;
+  /* Mais padding */
+  border-radius: 8px;
+  font-size: 1rem;
+  /* Maior */
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.player-chip span {
+  /* Limitar nome do jogador */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-chip:hover {
+  transform: scale(1.03);
+  /* Efeito de zoom */
+  border-color: var(--text-secondary);
+}
+
+.player-chip i {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  /* Maior */
+  flex-shrink: 0;
+}
+
+.player-chip.winner {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
   font-weight: 600;
+  box-shadow: 0 0 10px var(--accent-primary-glow);
+  /* Brilho no vencedor */
 }
 
-.table-actions {
+.player-chip.winner i {
+  color: var(--accent-primary);
+}
+
+.player-pos {
+  position: absolute;
+  top: 0;
+  /* Ajustado */
+  right: 0;
+  /* Ajustado */
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  /* Padding ajustado */
+  border-bottom-left-radius: 8px;
+  border-top-right-radius: 8px;
+  /* Adicionado */
+}
+
+.table-card-actions {
+  padding: 1.5rem;
+  /* Mais padding */
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  /* Fundo diferente */
+}
+
+.table-card-actions .p-button {
+  width: 100%;
+}
+
+.register-result-button:not(:disabled) {
+  animation: pulse 2s infinite 0.5s;
+  /* Delay na animação */
+}
+
+
+.tournament-actions {
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  gap: 1.5rem;
+  /* Mais gap */
+  margin-top: 3rem;
+  /* Mais espaço */
+  padding-top: 2rem;
+  border-top: 1px dashed var(--border-color);
+  /* Linha tracejada */
 }
 
-/* 7. Diálogo de Resultados */
+/* * 5. DIÁLOGO DE RESULTADOS
+ */
+:deep(.results-dialog) .p-dialog-content {
+  background-color: var(--bg-secondary);
+}
+
 .results-info {
   text-align: center;
+  margin-bottom: 2rem;
+  /* Mais espaço */
+}
+
+.results-info strong {
+  font-size: 1.35rem;
+  /* Maior */
+  font-weight: 600;
+  display: block;
+  color: var(--text-primary);
+  /* Mais destaque */
+}
+
+.results-info p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  /* Maior */
+  margin-top: 0.35rem;
+}
+
+.results-dialog .field {
   margin-bottom: 1rem;
+  /* Mais espaço */
 }
 
-/* 8. Tooltip de Desempate */
-:deep(.p-tooltip) {
-  max-width: none !important;
-  opacity: 1 !important;
+.results-dialog .p-inputgroup-addon {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  /* Cor do ícone */
 }
 
-:deep(.p-tooltip .p-tooltip-text) {
-  background: var(--surface-card);
-  backdrop-filter: blur(5px);
-  color: var(--text-color);
-  padding: 1rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+.results-dialog .p-inputgroup-addon.player-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  /* Alinha nome à esquerda */
+}
+
+.results-dialog .p-dropdown {
+  flex: 0 0 130px;
+  /* Pouco maior */
+}
+
+.results-error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--status-warning);
+  background-color: rgba(245, 158, 11, 0.1);
+  padding: 1rem 1.25rem;
+  /* Mais padding */
   border-radius: 8px;
-  border: 1px solid var(--purple-glow);
-  width: auto !important;
+  text-align: left;
+  margin-top: 2rem;
+  /* Mais espaço */
+  font-size: 0.95rem;
+  /* Maior */
+  font-weight: 500;
+  border: 1px solid var(--status-warning);
 }
 
-:deep(.p-tooltip .p-tooltip-arrow) {
-  border-right-color: var(--surface-card);
+.results-error-message i {
+  font-size: 1.25rem;
+  /* Maior */
+  flex-shrink: 0;
 }
 
-:deep(.tiebreaker-tooltip h4) {
-  margin-top: 0;
-  margin-bottom: 0.75rem;
-  color: var(--purple-primary);
-  border-bottom: 1px solid var(--purple-glow);
-  padding-bottom: 0.5rem;
-  font-size: 1rem;
-  text-align: center;
+
+/* * 6. RESPONSIVIDADE (MOBILE)
+ */
+.drawer-toggle {
+  display: none;
 }
 
-:deep(.tiebreaker-tooltip ol) {
-  margin: 0;
-  padding-left: 1.25rem;
-}
+@media (max-width: 1024px) {
 
-:deep(.tiebreaker-tooltip li) {
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
-}
-
-/* 9. Responsividade */
-@media (max-width: 1200px) {
-  .tournament-sidebar {
-    width: 420px;
+  /* Ajustado breakpoint para tablets */
+  .ranking-drawer {
+    width: 320px;
+    /* Drawer ligeiramente menor */
   }
 }
 
 @media (max-width: 992px) {
-  .tournament-container {
-    flex-direction: column;
+  .tournament-page {
     height: auto;
+    min-height: 100vh;
+    display: block;
   }
 
-  .tournament-sidebar {
+  .main-content {
+    height: auto;
+    padding: 1.5rem;
+    padding-top: 6rem;
+    overflow-y: visible;
+  }
+
+  /* Drawer Mobile */
+  .ranking-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    /* Mantido */
+    height: 100%;
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: 5px 0 40px rgba(0, 0, 0, 0.4);
+    /* Sombra mais forte */
+    border-right: 1px solid var(--border-color);
+  }
+
+  .drawer-open .ranking-drawer {
+    transform: translateX(0);
+  }
+
+  .drawer-toggle {
+    display: flex;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .drawer-open .drawer-toggle {
+    transform: translateX(calc(320px + 1rem));
+  }
+
+  .drawer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: auto;
-    max-height: 50vh;
-    /* Aumentado para melhor visualização */
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    /* Mais escuro */
+    backdrop-filter: blur(5px);
+    /* Blur mais forte */
+    z-index: 999;
+    opacity: 0;
+    /* Para animação */
+    transition: opacity 0.3s ease;
   }
 
-  .tournament-content {
-    padding: 1rem 1.5rem;
+  .drawer-open .drawer-overlay {
+    display: block;
+    opacity: 1;
   }
+
+  /* Ajustes gerais mobile */
+  .setup-header h1,
+  .active-header h1 {
+    font-size: 2.2rem;
+    /* Pouco maior */
+  }
+
+  .setup-controls {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    /* Mais gap */
+    align-items: stretch;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .rounds-group,
+  .generate-group,
+  .add-player-group {
+    width: 100%;
+  }
+
+  .generate-group .p-inputnumber {
+    width: 100%;
+  }
+
+  .tables-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .active-header {
+    flex-direction: column;
+    align-items: flex-start;
+    border-bottom: none;
+    /* Remover borda no mobile */
+    margin-bottom: 1rem;
+  }
+
+  .tournament-stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  /* Stats ocupam largura */
+  .round-actions {
+    justify-content: center;
+  }
+
+  /* Centraliza botões */
 }
 
-@media (max-width: 768px) {
-  .setup-form {
+@media (max-width: 480px) {
+  .main-content {
+    padding: 1rem;
+    padding-top: 5.5rem;
+  }
+
+  .card-content {
+    padding: 1.25rem;
+    /* Padding ligeiramente maior */
+  }
+
+  :deep(.results-dialog) {
+    width: 95vw !important;
+  }
+
+  .table-card-players {
     grid-template-columns: 1fr;
   }
 
-  .tables-container {
-    grid-template-columns: 1fr;
+  /* Drawer Mobile Menor */
+  .ranking-drawer {
+    width: 85vw;
+    /* Pouco menor */
+    max-width: 300px;
+    /* Máximo menor */
   }
 
-  .tournament-info {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start;
+  .drawer-open .drawer-toggle {
+    transform: translateX(calc(85vw + 1rem));
   }
 
-  .round-actions {
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
+  .ranking-item .name {
+    padding: 0 0.5rem;
   }
 
-  .round-actions .p-button {
-    width: 100%;
+  .ranking-item .tiebreaks {
+    min-width: 100px;
+    /* Menor */
+    gap: 0.4rem;
+    /* Menor */
+    font-size: 0.8rem;
+    justify-content: space-between;
+  }
+
+  .ranking-item .tiebreaks i {
+    font-size: 0.75rem;
+  }
+
+  /* Header do ranking mais compacto */
+  .ranking-item.header {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .ranking-item.header .tiebreaks {
+    min-width: 100px;
+  }
+
+  /* Títulos menores */
+  .setup-header h1,
+  .active-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .card-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .setup-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .tournament-stats span {
+    font-size: 1rem;
   }
 }
 </style>
