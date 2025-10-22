@@ -13,7 +13,7 @@ export function useTournament() {
     return Math.ceil(players.value.length / 4)
   })
 
-  function getAveragePosition(player) {
+  const getAveragePosition = (player) => {
     if (!player.matches || player.matches.length === 0) return 4
     return player.matches.reduce((sum, match) => sum + match.position, 0) / player.matches.length
   }
@@ -80,10 +80,8 @@ export function useTournament() {
     for (let i = 0; i < numTables; i++) {
       const playersForThisTable = basePlayersPerTable + (extraPlayers > 0 ? 1 : 0)
       extraPlayers--
-
       const tablePlayers = roundPlayers.slice(playerIndex, playerIndex + playersForThisTable)
       playerIndex += playersForThisTable
-
       if (tablePlayers.length > 0) {
         tables.push({ number: i + 1, players: tablePlayers.map(p => ({ id: p.id, name: p.name, result: null })), status: 'pending' })
       }
@@ -93,7 +91,6 @@ export function useTournament() {
 
   function startTournament() {
     if (players.value.length < 4) return false
-
     players.value.forEach(p => { p.points = 0; p.matches = [] })
     currentRound.value = 1
     rounds.value = []
@@ -102,9 +99,39 @@ export function useTournament() {
     return true
   }
 
-  function saveResults(tableIndex, results) {
-    const table = currentTables.value[tableIndex]
+  function revertResults(tableIndex, roundNumber) {
+    const round = rounds.value.find(r => r.number === roundNumber)
+    if (!round) return
+    const table = round.tables[tableIndex]
+    if (!table || table.status !== 'completed') return
+
+    table.players.forEach((playerInTable) => {
+      const originalPlayer = players.value.find(p => p.id === playerInTable.id)
+      if (originalPlayer && originalPlayer.matches) {
+        const matchIndex = originalPlayer.matches.findIndex(
+          m => m.round === roundNumber && m.table === table.number
+        )
+
+        if (matchIndex > -1) {
+          const matchToRemove = originalPlayer.matches[matchIndex]
+          originalPlayer.points = (originalPlayer.points || 0) - matchToRemove.points
+          originalPlayer.matches.splice(matchIndex, 1)
+        }
+      }
+      playerInTable.result = null
+    })
+    table.status = 'pending'
+  }
+
+  function saveResults(tableIndex, results, isEditing = false) {
+    const roundData = rounds.value[currentRound.value - 1]
+    if (!roundData) return
+    const table = roundData.tables[tableIndex]
     if (!table) return
+
+    if (isEditing) {
+      revertResults(tableIndex, currentRound.value)
+    }
 
     table.players.forEach((player, idx) => {
       const position = results[idx]
@@ -117,7 +144,7 @@ export function useTournament() {
         if (position === 3) points = 1
         originalPlayer.points = (originalPlayer.points || 0) + points
         if (!originalPlayer.matches) originalPlayer.matches = []
-        originalPlayer.matches.push({ round: currentRound.value, table: tableIndex + 1, position, points })
+        originalPlayer.matches.push({ round: currentRound.value, table: table.number, position, points })
       }
     })
     table.status = 'completed'
@@ -148,5 +175,6 @@ export function useTournament() {
     addPlayer, removePlayer, startTournament, saveResults, nextRound,
     endTournament,
     resetTournament, getAveragePosition,
+    revertResults
   }
 }
