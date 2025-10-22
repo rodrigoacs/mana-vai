@@ -357,7 +357,7 @@ const {
 
 // --- Refs de Formulário ---
 const newPlayerName = ref('')
-const randomPlayerCount = ref(8)
+const randomPlayerCount = ref(16)
 const showResultDialog = ref(false)
 const selectedTable = ref(null)
 const playerResults = ref([])
@@ -440,6 +440,12 @@ function openResultDialog(tableIndex) {
   showResultDialog.value = true
 }
 
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    generateRandomPlayers()
+  }
+})
+
 function generateRandomPlayers() {
   const count = randomPlayerCount.value
   if (count <= 0) return
@@ -484,7 +490,7 @@ function generateRandomResults() {
 }
 
 .ranking-drawer {
-  width: 380px;
+  width: 480px;
   flex-shrink: 0;
   background-color: var(--bg-secondary);
   height: 100vh;
@@ -800,6 +806,8 @@ function generateRandomResults() {
   display: flex;
   border-radius: 8px;
   overflow: hidden;
+  align-items: center;
+  gap: 1rem;
 }
 
 .p-inputgroup .p-button {
@@ -1181,7 +1189,6 @@ function generateRandomResults() {
 }
 
 .results-dialog .p-inputgroup-addon {
-  background: var(--bg-card);
   border-color: var(--border-color);
   color: var(--text-secondary);
   /* Cor do ícone */
